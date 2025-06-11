@@ -1,6 +1,8 @@
 import os
 import uuid
 import zipfile
+import json
+import glob
 from datetime import datetime
 from typing import Dict, List, Optional
 from PIL import Image
@@ -44,6 +46,12 @@ class ImageManager:
         # Ensure temp directory exists
         self.temp_dir = os.path.join(os.getcwd(), 'temp_images')
         os.makedirs(self.temp_dir, exist_ok=True)
+        
+        # Arquivo para armazenar o último diretório de salvamento
+        self.settings_file = os.path.join(os.getcwd(), 'user_settings.json')
+        
+        # Carregar último diretório de salvamento, se existir
+        self._load_last_save_directory()
     
     def set_logger(self, logger):
         """Set the logger for this component"""
@@ -213,6 +221,9 @@ class ImageManager:
         # Create directory if it doesn't exist
         os.makedirs(directory, exist_ok=True)
         
+        # Salvar o diretório escolhido para uso futuro
+        self._save_last_directory(directory)
+        
         saved_files = []
         selected_ids = self.get_selected_image_ids()
         
@@ -296,3 +307,80 @@ class ImageManager:
         thumbnail = image.copy()
         thumbnail.thumbnail((size, size), Image.LANCZOS)
         return thumbnail
+    
+    def _save_last_directory(self, directory: str):
+        """
+        Salva o último diretório usado para ser reutilizado na próxima execução
+        
+        Args:
+            directory: Caminho do diretório a ser salvo
+        """
+        try:
+            settings = {}
+            
+            # Carregar configurações existentes, se houver
+            if os.path.exists(self.settings_file):
+                with open(self.settings_file, 'r') as f:
+                    try:
+                        settings = json.load(f)
+                    except json.JSONDecodeError:
+                        # Se o arquivo estiver corrompido, iniciar com um dicionário vazio
+                        settings = {}
+            
+            # Atualizar último diretório
+            settings['last_save_directory'] = directory
+            self.default_save_directory = directory
+            
+            # Salvar configurações
+            with open(self.settings_file, 'w') as f:
+                json.dump(settings, f)
+                
+            if self.logger:
+                self.logger.info(f"Last save directory saved: {directory}")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error saving last directory: {e}")
+    
+    def _load_last_save_directory(self):
+        """
+        Carrega o último diretório de salvamento usado
+        """
+        try:
+            if os.path.exists(self.settings_file):
+                with open(self.settings_file, 'r') as f:
+                    settings = json.load(f)
+                    
+                last_dir = settings.get('last_save_directory')
+                if last_dir and os.path.exists(last_dir):
+                    self.default_save_directory = last_dir
+                    
+                    if self.logger:
+                        self.logger.info(f"Loaded last save directory: {last_dir}")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error loading last save directory: {e}")
+    
+    def clean_temp_files(self):
+        """
+        Remove todos os arquivos temporários da pasta temp_images
+        """
+        try:
+            # Lista todos os arquivos no diretório temporário
+            temp_files = glob.glob(os.path.join(self.temp_dir, f"*.{self.default_format}"))
+            
+            # Remove cada arquivo
+            for file_path in temp_files:
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error(f"Error removing temporary file: {file_path} - {e}")
+            
+            if self.logger:
+                self.logger.info(f"Cleaned {len(temp_files)} temporary image files")
+                
+            return len(temp_files)  # Retorna o número de arquivos removidos
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error cleaning temp files: {e}")
+            return 0

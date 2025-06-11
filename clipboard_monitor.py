@@ -5,6 +5,8 @@ from typing import Callable, Optional
 from PIL import Image, ImageGrab
 import yaml
 import os
+import subprocess
+import platform
 
 
 class ClipboardMonitor:
@@ -115,3 +117,32 @@ class ClipboardMonitor:
         self.monitor_thread = None
         if self.logger:
             self.logger.info("Clipboard monitor stopped")
+    
+    def clear_clipboard(self):
+        """Clear the clipboard contents of any images"""
+        if platform.system() == "Windows":
+            try:
+                try:
+                    # Método 1: Usando win32clipboard (requer pywin32)
+                    import win32clipboard
+                    win32clipboard.OpenClipboard()
+                    win32clipboard.EmptyClipboard()
+                    win32clipboard.CloseClipboard()
+                except ImportError:
+                    # Método 2: Alternativa usando subprocess
+                    import subprocess
+                    # Usa um comando em branco para limpar o clipboard
+                    subprocess.run(['cmd.exe', '/c', 'echo off | clip'], check=False)
+                
+                # Reseta o hash interno
+                self.last_image_hash = None
+                
+                if self.logger:
+                    self.logger.info("Clipboard cleared successfully")
+                return True
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Error clearing clipboard: {e}")
+                # Mesmo com erro, vamos resetar o hash para evitar falsas detecções
+                self.last_image_hash = None
+                return False

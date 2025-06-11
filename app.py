@@ -319,9 +319,7 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         current_row = 0
         current_col = 0
         
-        # Create frame for each row
-        row_frame = ctk.CTkFrame(self.scroll_frame)
-        row_frame.pack(fill="x", pady=5)
+        # Começamos sem nenhum row_frame inicial (será criado apenas quando necessário)
         
         for image_id in image_ids:
             # Get image and create thumbnail
@@ -461,9 +459,17 @@ class ClipboardImageApp(ctk.CTk):
         self.image_manager = ImageManager()
         self.image_manager.set_logger(self.logger)
         
+        # Limpar os arquivos temporários na inicialização
+        files_cleaned = self.image_manager.clean_temp_files()
+        self.logger.info(f"Cleaned {files_cleaned} temporary files on startup")
+        
         # Create clipboard monitor
         self.clipboard_monitor = ClipboardMonitor(callback=self.on_image_captured)
         self.clipboard_monitor.set_logger(self.logger)
+        
+        # Limpar o clipboard na inicialização
+        self.clipboard_monitor.clear_clipboard()
+        self.logger.info("Clipboard cleared on startup")
         
         # UI attributes
         self.current_image = None
