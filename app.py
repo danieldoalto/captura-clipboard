@@ -5,11 +5,218 @@ import customtkinter as ctk
 from PIL import Image, ImageTk
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Callable
 
 from logger import setup_logger
 from clipboard_monitor import ClipboardMonitor
 from image_manager import ImageManager
+
+
+class ImageViewerDialog(ctk.CTkToplevel):
+    """
+    Dialog to display a single image in larger size.
+    Opens when user double-clicks on a thumbnail in the selection dialog.
+    """
+    
+    def __init__(self, parent, image_path: str, image_id: str, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        
+        self.parent = parent
+        self.image_path = image_path
+        self.image_id = image_id
+        
+        # Configure window
+        self.title(f"Imagem {image_id}")
+        self.attributes("-topmost", True)  # Always on top of parent
+        
+        # Load the full image
+        self.image = Image.open(image_path)
+        width, height = self.image.size
+        
+        # Set a reasonable initial size (max 80% of screen size)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        max_width = int(screen_width * 0.8)
+        max_height = int(screen_height * 0.8)
+        
+        # Scale the window to fit the image but not exceed screen constraints
+        display_width = min(width, max_width)
+        display_height = min(height, max_height)
+        
+        # Add space for window decorations and buttons
+        window_width = display_width + 40
+        window_height = display_height + 80
+        
+        # Position window centered
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        
+        # Setup UI
+        self.setup_ui(display_width, display_height)
+        
+        # Make dialog modal
+        self.transient(parent)
+        self.grab_set()
+        self.focus_set()
+    
+    def setup_ui(self, display_width, display_height):
+        """Setup image viewer UI"""
+        # Container frame
+        main_frame = ctk.CTkFrame(self)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Create a scrollable frame for the image
+        scroll_frame = ctk.CTkScrollableFrame(main_frame)
+        scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Prepare the image for display
+        if display_width < self.image.width or display_height < self.image.height:
+            # Scale down for display if needed
+            img_ratio = min(display_width/self.image.width, display_height/self.image.height)
+            display_size = (int(self.image.width * img_ratio), int(self.image.height * img_ratio))
+            display_img = self.image.resize(display_size, Image.LANCZOS)
+        else:
+            display_img = self.image
+            
+        # Convert to PhotoImage
+        self.photo_image = ImageTk.PhotoImage(display_img)
+        
+        # Image display label
+        self.image_label = ctk.CTkLabel(scroll_frame, image=self.photo_image, text="")
+        self.image_label.pack(padx=5, pady=5)
+        
+        # Image info and close button frame
+        bottom_frame = ctk.CTkFrame(main_frame)
+        bottom_frame.pack(fill="x", pady=(10, 0))
+        
+        # Display image dimensions
+        info_text = f"Tamanho original: {self.image.width}x{self.image.height} pixels"
+        ctk.CTkLabel(bottom_frame, text=info_text).pack(side="left", padx=5)
+        
+        # Close button
+        close_btn = ctk.CTkButton(
+            bottom_frame, 
+            text="Fechar", 
+            command=self.destroy,
+            width=100
+        )
+        close_btn.pack(side="right", padx=5)
+
+
+class FloatingCaptureWindow(ctk.CTkToplevel):
+    """
+    Floating mini-window that shows capture progress and provides a stop button.
+    Appears when capturing is active, while main window is minimized.
+    """
+    
+    def __init__(self, parent, stop_callback: Callable, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        
+        self.parent = parent
+        self.stop_callback = stop_callback
+        self.logger = parent.logger
+        
+        # Configure window
+        self.title("Capturando")  # Title still set for taskbar
+        self.geometry("300x80")  # Small window size
+        self.resizable(False, False)  # Fixed size
+        self.attributes("-topmost", True)  # Always on top
+        self.overrideredirect(True)  # Remove window decoration (title bar)
+        
+        # Center the window on screen
+        self.center_window()
+        
+        # Since we have no title bar to close the window,
+        # bind an escape key handler as an alternative
+        self.bind("<Escape>", lambda e: self.stop_callback())
+        
+        # Variables for window dragging
+        self.drag_data = {"x": 0, "y": 0, "dragging": False}
+        
+        # Setup UI
+        self.setup_ui()
+        
+        # Initialize capture count
+        self.capture_count = 0
+        self.last_image_size = "N/A"
+    
+    def center_window(self):
+        """Center window on screen"""
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"{width}x{height}+{x}+{y}")
+    
+    def setup_ui(self):
+        """Setup the mini-window UI"""
+        # Main container with padding
+        main_frame = ctk.CTkFrame(self)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Make the entire window draggable
+        self.bind("<ButtonPress-1>", self.start_drag)
+        self.bind("<ButtonRelease-1>", self.stop_drag)
+        self.bind("<B1-Motion>", self.on_drag)
+        
+        # Info frame (top)
+        info_frame = ctk.CTkFrame(main_frame)
+        info_frame.pack(fill="x", pady=(0, 5))
+        
+        # Capture count
+        self.count_label = ctk.CTkLabel(info_frame, text="Capturas: 0")
+        self.count_label.pack(side="left")
+        
+        # Image size
+        self.size_label = ctk.CTkLabel(info_frame, text="Tamanho: N/A")
+        self.size_label.pack(side="right")
+        
+        # Button frame (bottom)
+        button_frame = ctk.CTkFrame(main_frame)
+        button_frame.pack(fill="x", pady=(5, 0))
+        
+        # Stop button
+        self.stop_button = ctk.CTkButton(
+            button_frame,
+            text="Finalizar Captura",
+            command=self.stop_callback,
+            fg_color="#dc3545",
+            hover_color="#c82333"
+        )
+        self.stop_button.pack(fill="x")
+    
+    def start_drag(self, event):
+        """Start window dragging operation"""
+        self.drag_data["x"] = event.x
+        self.drag_data["y"] = event.y
+        self.drag_data["dragging"] = True
+    
+    def stop_drag(self, event):
+        """Stop window dragging operation"""
+        self.drag_data["dragging"] = False
+    
+    def on_drag(self, event):
+        """Move window during drag operation"""
+        if self.drag_data["dragging"]:
+            # Calculate the distance moved
+            dx = event.x - self.drag_data["x"]
+            dy = event.y - self.drag_data["y"]
+            
+            # Move window by this offset
+            new_x = self.winfo_x() + dx
+            new_y = self.winfo_y() + dy
+            self.geometry(f"+{new_x}+{new_y}")
+    
+    def update_capture_info(self, count: int, image_width: int = None, image_height: int = None):
+        """Update capture count and image size information"""
+        self.capture_count = count
+        self.count_label.configure(text=f"Capturas: {count}")
+        
+        if image_width is not None and image_height is not None:
+            self.last_image_size = f"{image_width}x{image_height}"
+            self.size_label.configure(text=f"Tamanho: {self.last_image_size}")
 
 
 class ImageSelectionDialog(ctk.CTkToplevel):
@@ -144,6 +351,10 @@ class ImageSelectionDialog(ctk.CTkToplevel):
             label.image = thumbnail_tk  # Keep reference to prevent garbage collection
             label.pack(padx=5, pady=5)
             
+            # Set up double-click event for thumbnail
+            label.bind("<Double-Button-1>", 
+                       lambda e, id=image_id: self.on_thumbnail_double_click(id))
+            
             # Store reference to checkbox variable
             self.thumbnails[image_id] = {
                 'var': check_var,
@@ -160,12 +371,26 @@ class ImageSelectionDialog(ctk.CTkToplevel):
     
     def on_thumbnail_select(self, image_id: str, var: tk.BooleanVar):
         """Handle individual thumbnail selection"""
-        selected = var.get()
-        self.image_manager.set_image_selected(image_id, selected)
+        is_selected = var.get()
+        self.image_manager.set_image_selected(image_id, is_selected)
         
-        # Check if all are selected or deselected
-        all_selected = all(thumb['var'].get() for thumb in self.thumbnails.values())
-        self.select_all_var.set(all_selected)
+        # Update select all checkbox if needed
+        if not is_selected and self.select_all_var.get():
+            self.select_all_var.set(False)
+            
+    def on_thumbnail_double_click(self, image_id: str):
+        """Handle double-click on thumbnail to open image viewer"""
+        try:
+            # Get image path from image manager
+            image_path = self.image_manager.get_image_path(image_id)
+            if not image_path:
+                return
+                
+            # Open image viewer dialog
+            viewer = ImageViewerDialog(self, image_path, image_id)
+            
+        except Exception as e:
+            self.logger.error(f"Error opening image viewer: {e}")
     
     def on_save(self):
         """Save selected images"""
@@ -240,6 +465,7 @@ class ClipboardImageApp(ctk.CTk):
         self.current_image = None
         self.current_image_tk = None
         self.monitoring = False
+        self.floating_window = None
         
         # Configure window
         app_config = self.config.get('application', {})
@@ -340,12 +566,45 @@ class ClipboardImageApp(ctk.CTk):
         self.start_button.configure(state="disabled")
         self.stop_button.configure(state="normal")
         
+        # Minimize main window
+        self.minimize()
+        
+        # Show floating window
+        self.show_floating_window()
+        
         self.logger.info("Started clipboard monitoring")
+        
+    def minimize(self):
+        """Minimize main window"""
+        self.iconify()
+        
+    def restore(self):
+        """Restore main window"""
+        self.deiconify()
+        
+    def show_floating_window(self):
+        """Show floating mini window"""
+        if hasattr(self, 'floating_window') and self.floating_window is not None:
+            self.floating_window.destroy()
+            
+        # Create floating window
+        self.floating_window = FloatingCaptureWindow(self, stop_callback=self.stop_monitoring)
+        
+        self.logger.info("Floating capture window opened")
     
     def stop_monitoring(self):
         """Stop clipboard monitoring"""
         self.clipboard_monitor.stop()
         self.monitoring = False
+        
+        # Close floating window if exists
+        if hasattr(self, 'floating_window') and self.floating_window is not None:
+            self.floating_window.destroy()
+            self.floating_window = None
+            self.logger.info("Floating capture window closed")
+            
+        # Restore main window
+        self.restore()
         
         # Update UI
         self.status_label.configure(text="Status: Monitoramento parado")
@@ -372,19 +631,27 @@ class ClipboardImageApp(ctk.CTk):
             self.current_image = preview
             self.current_image_tk = ImageTk.PhotoImage(preview)
             
-            # Update preview
+            # Update preview in main window
             self.preview_label.configure(text="", image=self.current_image_tk)
             
             # Enable save button if this is the first image
             if len(self.image_manager.get_all_image_ids()) == 1:
                 self.save_button.configure(state="normal")
             
-            # Update image count
+            # Get image count and size
+            image_count = len(self.image_manager.get_all_image_ids())
+            width, height = image.size
+            
+            # Update image count in main window
             self.image_count_label.configure(
-                text=f"Imagens: {len(self.image_manager.get_all_image_ids())}"
+                text=f"Imagens: {image_count}"
             )
             
-            self.logger.info(f"Displayed captured image with ID: {image_id}")
+            # Update floating window if active
+            if hasattr(self, 'floating_window') and self.floating_window is not None:
+                self.floating_window.update_capture_info(image_count, width, height)
+            
+            self.logger.info(f"Displayed captured image with ID: {image_id} | Size: {width}x{height}")
             
         except Exception as e:
             self.logger.error(f"Error processing captured image: {e}")
@@ -406,6 +673,11 @@ class ClipboardImageApp(ctk.CTk):
             # Stop monitoring if active
             if self.monitoring:
                 self.stop_monitoring()
+                
+            # Close floating window if exists
+            if hasattr(self, 'floating_window') and self.floating_window is not None:
+                self.floating_window.destroy()
+                self.floating_window = None
             
             self.logger.info("Application closed")
             self.quit()

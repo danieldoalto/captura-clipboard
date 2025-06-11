@@ -37,9 +37,13 @@ class ImageManager:
         self.default_format = self.image_config.get('default_format', 'png')
         
         # Dictionary to store captured images
-        # {id: {'image': PIL.Image, 'timestamp': datetime, 'selected': bool}}
+        # {id: {'image': PIL.Image, 'timestamp': datetime, 'selected': bool, 'path': str}}
         self.images: Dict[str, Dict] = {}
         self.logger = None  # Will be set externally
+        
+        # Ensure temp directory exists
+        self.temp_dir = os.path.join(os.getcwd(), 'temp_images')
+        os.makedirs(self.temp_dir, exist_ok=True)
     
     def set_logger(self, logger):
         """Set the logger for this component"""
@@ -56,10 +60,23 @@ class ImageManager:
             str: ID of the added image
         """
         image_id = str(uuid.uuid4())
+        
+        # Save image to temporary file
+        temp_path = os.path.join(self.temp_dir, f"{image_id}.{self.default_format}")
+        
+        try:
+            image.save(temp_path)
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error saving temporary image: {e}")
+        
         self.images[image_id] = {
             'image': image,
             'timestamp': datetime.now(),
-            'selected': True  # Default to selected
+            'selected': True,  # Default to selected
+            'path': temp_path,
+            'width': image.width,
+            'height': image.height
         }
         
         if self.logger:
@@ -113,8 +130,64 @@ class ImageManager:
             if data['selected']
         ]
     
+    def get_image_path(self, image_id: str) -> Optional[str]:
+        """
+        Get the file path of an image.
+        
+        Args:
+            image_id: The ID of the image
+            
+        Returns:
+            Optional[str]: Path to the image file or None if not found
+        """
+        if image_id in self.images and 'path' in self.images[image_id]:
+            return self.images[image_id]['path']
+        return None
+        
+    def get_image_metadata(self, image_id: str) -> Dict:
+        """
+        Get metadata for an image.
+        
+        Args:
+            image_id: The ID of the image
+            
+        Returns:
+            Dict: Dictionary with image metadata
+        """
+        if image_id in self.images:
+            img_data = self.images[image_id]
+            return {
+                'width': img_data.get('width', 0),
+                'height': img_data.get('height', 0),
+                'timestamp': img_data.get('timestamp', datetime.now())
+            }
+        return {'width': 0, 'height': 0, 'timestamp': datetime.now()}
+    
+    def get_thumbnail(self, image_id: str) -> Optional[Image.Image]:
+        """
+        Get a thumbnail of an image.
+        
+        Args:
+            image_id: The ID of the image
+            
+        Returns:
+            Optional[Image.Image]: Thumbnail image or None if not found
+        """
+        if image_id in self.images and 'image' in self.images[image_id]:
+            return self.create_thumbnail(self.images[image_id]['image'])
+        return None
+        
     def clear_images(self):
         """Clear all stored images"""
+        # Remove temporary files
+        for image_id, data in self.images.items():
+            if 'path' in data and os.path.exists(data['path']):
+                try:
+                    os.remove(data['path'])
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error(f"Error removing temporary file: {e}")
+                        
         self.images.clear()
         if self.logger:
             self.logger.info("Cleared all images")
