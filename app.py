@@ -178,14 +178,16 @@ class FloatingCaptureWindow(ctk.CTkToplevel):
         button_frame.pack(fill="x", pady=(5, 0))
         
         # Stop button
-        self.stop_button = ctk.CTkButton(
-            button_frame,
-            text="Finalizar Captura",
+        self.finish_button = ctk.CTkButton(
+            button_frame, 
+            text="Pausar Captura", 
             command=self.stop_callback,
             fg_color="#dc3545",
-            hover_color="#c82333"
+            hover_color="#c82333",
+            corner_radius=5,
+            height=30
         )
-        self.stop_button.pack(fill="x")
+        self.finish_button.pack(fill="x")
     
     def start_drag(self, event):
         """Start window dragging operation"""
@@ -230,6 +232,7 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.parent = parent
         self.image_manager = image_manager
         self.logger = parent.logger
+        self.images_saved = False  # Track if images were saved
         
         # Configure window
         self.title("Selecionar Imagens")
@@ -275,7 +278,7 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.create_zip_checkbox.pack(side="left", padx=5)
         
         # Add buttons
-        self.cancel_button = ctk.CTkButton(button_frame, text="Cancelar", command=self.on_close)
+        self.cancel_button = ctk.CTkButton(button_frame, text="Voltar", command=self.on_close)
         self.cancel_button.pack(side="right", padx=5)
         
         self.save_button = ctk.CTkButton(button_frame, text="Salvar Selecionadas", command=self.on_save)
@@ -395,42 +398,43 @@ class ImageSelectionDialog(ctk.CTkToplevel):
     def on_save(self):
         """Save selected images"""
         try:
-            # Get save directory from user
-            directory = filedialog.askdirectory(
-                title="Selecione o diretório para salvar as imagens",
-                initialdir=self.image_manager.default_save_directory
-            )
+            # Get selected images
+            selected_ids = self.image_manager.get_selected_image_ids()
+            if not selected_ids:
+                messagebox.showinfo("Nenhuma Seleção", "Nenhuma imagem selecionada para salvar.")
+                return
+            
+            # Get save directory
+            prefix = self.parent.prefix_entry.get().strip()
+            directory = filedialog.askdirectory(title="Selecionar Pasta para Salvar")
             
             if not directory:
                 return  # User cancelled
             
-            # Get prefix from parent app
-            prefix = self.parent.prefix_entry.get()
-            if not prefix:
-                prefix = self.image_manager.default_prefix
+            # Get ZIP option
+            create_zip = self.create_zip_var.get()
             
             # Save images
-            create_zip = self.create_zip_var.get()
-            saved_files = self.image_manager.save_images(
-                prefix=prefix,
-                directory=directory,
-                create_zip=create_zip
-            )
+            saved_files = self.image_manager.save_images(prefix, directory, create_zip)
             
             if saved_files:
-                messagebox.showinfo(
-                    "Salvo com Sucesso",
-                    f"Salvo {len(saved_files)} arquivo(s) em:\n{directory}"
-                )
-                self.logger.info(f"Saved {len(saved_files)} files to {directory}")
-                self.destroy()  # Close dialog
+                # Show success message
+                count = len(saved_files)
+                msg = f"{count} imagens salvas com sucesso em:\n{directory}"
+                if create_zip:
+                    msg += "\nArquivo ZIP criado."
+                messagebox.showinfo("Sucesso", msg)
+                
+                # Mark that images were saved
+                self.images_saved = True
+                
+                # Close dialog
+                self.on_close()
             else:
-                messagebox.showwarning(
-                    "Nenhuma Imagem Selecionada",
-                    "Nenhuma imagem foi selecionada para salvar."
-                )
+                messagebox.showerror("Erro", "Nenhuma imagem foi salva. Verifique as permissões da pasta.")
+                
         except Exception as e:
-            self.logger.error(f"Error saving images: {e}")
+            self.parent.logger.error(f"Error saving images: {e}")
             messagebox.showerror("Erro", f"Erro ao salvar imagens: {str(e)}")
     
     def on_close(self):
@@ -466,6 +470,8 @@ class ClipboardImageApp(ctk.CTk):
         self.current_image_tk = None
         self.monitoring = False
         self.floating_window = None
+        self.capture_count = 0  # Persistente durante toda a sessão do aplicativo
+        self.has_unsaved_images = False  # Controla se há imagens não salvas
         
         # Configure window
         app_config = self.config.get('application', {})
@@ -514,19 +520,21 @@ class ClipboardImageApp(ctk.CTk):
         
         self.stop_button = ctk.CTkButton(
             self.controls_frame, 
-            text="Finalizar Captura", 
+            text="Pausar Captura", 
             command=self.stop_monitoring,
+            state="disabled",
             fg_color="#dc3545",
-            hover_color="#c82333",
-            state="disabled"
+            hover_color="#c82333"
         )
         self.stop_button.pack(side="left", padx=5)
         
         self.save_button = ctk.CTkButton(
             self.controls_frame, 
-            text="Salvar Imagens", 
+            text="Verificar Imagens", 
             command=self.show_save_dialog,
-            state="disabled"
+            state="disabled",
+            fg_color="#28a745",
+            hover_color="#218838"
         )
         self.save_button.pack(side="left", padx=5)
         
@@ -624,6 +632,10 @@ class ClipboardImageApp(ctk.CTk):
             # Add to image manager
             image_id = self.image_manager.add_image(image)
             
+            # Increment capture count for the entire session
+            self.capture_count += 1
+            self.has_unsaved_images = True
+            
             # Create a resized preview
             preview = self.image_manager.resize_for_preview(image)
             
@@ -638,18 +650,18 @@ class ClipboardImageApp(ctk.CTk):
             if len(self.image_manager.get_all_image_ids()) == 1:
                 self.save_button.configure(state="normal")
             
-            # Get image count and size
-            image_count = len(self.image_manager.get_all_image_ids())
+            # Get current image count and size
+            current_images = len(self.image_manager.get_all_image_ids())
             width, height = image.size
             
-            # Update image count in main window
+            # Update image count in main window - show both current batch and total session
             self.image_count_label.configure(
-                text=f"Imagens: {image_count}"
+                text=f"Imagens: {current_images} (Total: {self.capture_count})"
             )
             
             # Update floating window if active
             if hasattr(self, 'floating_window') and self.floating_window is not None:
-                self.floating_window.update_capture_info(image_count, width, height)
+                self.floating_window.update_capture_info(self.capture_count, width, height)
             
             self.logger.info(f"Displayed captured image with ID: {image_id} | Size: {width}x{height}")
             
@@ -660,12 +672,16 @@ class ClipboardImageApp(ctk.CTk):
         """Show the image selection dialog"""
         # Check if we have any images
         if not self.image_manager.get_all_image_ids():
-            messagebox.showinfo("Nenhuma Imagem", "Nenhuma imagem capturada para salvar.")
+            messagebox.showinfo("Nenhuma Imagem", "Nenhuma imagem capturada para verificar.")
             return
         
         # Create and show dialog
         dialog = ImageSelectionDialog(self, self.image_manager)
         self.wait_window(dialog)
+        
+        # After dialog is closed, check if images were saved
+        if hasattr(dialog, 'images_saved') and dialog.images_saved:
+            self.has_unsaved_images = False
     
     def on_close(self):
         """Handle application close"""
@@ -679,9 +695,29 @@ class ClipboardImageApp(ctk.CTk):
                 self.floating_window.destroy()
                 self.floating_window = None
             
-            self.logger.info("Application closed")
-            self.quit()
-            self.destroy()
+            # Check if there are unsaved images
+            if self.has_unsaved_images and len(self.image_manager.get_all_image_ids()) > 0:
+                # Ask for confirmation before closing
+                result = messagebox.askyesno(
+                    "Sair sem salvar", 
+                    "Existem imagens capturadas que não foram salvas. Deseja sair sem salvar?"
+                )
+                
+                if result:  # User confirmed exit without saving
+                    # Remove all temporary images
+                    self.image_manager.clear_images()
+                    self.logger.info("Discarded unsaved images before exit")
+                    self.logger.info("Application closed")
+                    self.quit()
+                    self.destroy()
+                else:  # User cancelled exit
+                    return  # Don't close the app
+            else:
+                # No unsaved images, just close
+                self.logger.info("Application closed")
+                self.quit()
+                self.destroy()
+                
         except Exception as e:
             self.logger.error(f"Error during application close: {e}")
 
