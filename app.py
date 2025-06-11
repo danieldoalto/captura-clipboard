@@ -14,35 +14,37 @@ from image_manager import ImageManager
 
 class ImageViewerDialog(ctk.CTkToplevel):
     """
-    Dialog to display a single image in larger size.
-    Opens when user double-clicks on a thumbnail in the selection dialog.
+    Dialog for viewing images in larger size
     """
     
-    def __init__(self, parent, image_path: str, image_id: str, *args, **kwargs):
+    def __init__(self, parent, image_path: str, image_id: str, filename: str=None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         
+        # Store reference to parent and ID
         self.parent = parent
-        self.image_path = image_path
         self.image_id = image_id
+        self.filename = filename
         
-        # Configure window
-        self.title(f"Imagem {image_id}")
-        self.attributes("-topmost", True)  # Always on top of parent
+        # Set title and make resizable
+        self.title("Visualizar Imagem")
+        self.minsize(400, 300)
         
-        # Load the full image
+        # Load image
         self.image = Image.open(image_path)
-        width, height = self.image.size
         
-        # Set a reasonable initial size (max 80% of screen size)
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        max_width = int(screen_width * 0.8)
-        max_height = int(screen_height * 0.8)
+        # Calculate window size
+        screen_width = self.winfo_screenwidth() * 0.8  # Use 80% of screen
+        screen_height = self.winfo_screenheight() * 0.8
+        
+        window_width = min(self.image.width + 40, screen_width)
+        window_height = min(self.image.height + 100, screen_height)
+        
+        display_width = window_width - 40
+        display_height = window_height - 100
         
         # Scale the window to fit the image but not exceed screen constraints
-        display_width = min(width, max_width)
-        display_height = min(height, max_height)
-        
+        display_width = min(self.image.width, display_width)
+        display_height = min(self.image.height, display_height)
         # Add space for window decorations and buttons
         window_width = display_width + 40
         window_height = display_height + 80
@@ -90,9 +92,23 @@ class ImageViewerDialog(ctk.CTkToplevel):
         bottom_frame = ctk.CTkFrame(main_frame)
         bottom_frame.pack(fill="x", pady=(10, 0))
         
+        # Info frame for multiple lines of information
+        info_frame = ctk.CTkFrame(bottom_frame, fg_color="transparent")
+        info_frame.pack(side="left", fill="y", padx=5, pady=5)
+        
         # Display image dimensions
-        info_text = f"Tamanho original: {self.image.width}x{self.image.height} pixels"
-        ctk.CTkLabel(bottom_frame, text=info_text).pack(side="left", padx=5)
+        size_text = f"Tamanho: {self.image.width}x{self.image.height} pixels"
+        ctk.CTkLabel(info_frame, text=size_text).pack(anchor="w")
+        
+        # Display file format and size in KB
+        file_size = os.path.getsize(os.path.join(self.parent.image_manager.temp_dir, f"{self.image_id}.{self.parent.image_manager.default_format}")) / 1024
+        format_text = f"Formato: {self.parent.image_manager.default_format.upper()}, Tamanho: {file_size:.1f} KB"
+        ctk.CTkLabel(info_frame, text=format_text).pack(anchor="w")
+        
+        # Display filename (if provided)
+        if self.filename:
+            filename_text = f"Nome do arquivo: {self.filename}"
+            ctk.CTkLabel(info_frame, text=filename_text).pack(anchor="w")
         
         # Close button
         close_btn = ctk.CTkButton(
@@ -110,12 +126,14 @@ class FloatingCaptureWindow(ctk.CTkToplevel):
     Appears when capturing is active, while main window is minimized.
     """
     
-    def __init__(self, parent, stop_callback: Callable, *args, **kwargs):
+    def __init__(self, parent, stop_callback: Callable, border_color="#32CD32", *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         
         self.parent = parent
         self.stop_callback = stop_callback
         self.logger = parent.logger
+        self.border_color = border_color  # Cor da borda (verde por padrão)
+        self.border_width = 2  # Largura da borda em pixels
         
         # Configure window
         self.title("Capturando")  # Title still set for taskbar
@@ -152,9 +170,13 @@ class FloatingCaptureWindow(ctk.CTkToplevel):
     
     def setup_ui(self):
         """Setup the mini-window UI"""
-        # Main container with padding
-        main_frame = ctk.CTkFrame(self)
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        # Primeiro frame para a borda colorida
+        border_frame = ctk.CTkFrame(self, fg_color=self.border_color)
+        border_frame.pack(fill="both", expand=True)
+        
+        # Main container com padding menor para mostrar a borda
+        main_frame = ctk.CTkFrame(border_frame)
+        main_frame.pack(fill="both", expand=True, padx=self.border_width, pady=self.border_width)
         
         # Make the entire window draggable
         self.bind("<ButtonPress-1>", self.start_drag)
@@ -241,6 +263,10 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.grab_set()  # Make modal
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         
+        # Armazenar referências a todos os widgets importantes
+        self.thumbnails = {}
+        self.row_frames = []
+        
         # Initialize UI
         self.setup_ui()
         self.load_thumbnails()
@@ -263,18 +289,28 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                                      command=self.toggle_select_all)
         self.select_all_checkbox.pack(side="right", padx=5)
         
-        # Create scrollable frame for thumbnails
-        self.scroll_frame = ctk.CTkScrollableFrame(self.main_frame)
-        self.scroll_frame.pack(fill="both", expand=True)
+        # Create scrollable frame for thumbnails - horizontal scrolling
+        self.scroll_frame = ctk.CTkScrollableFrame(self.main_frame, orientation="horizontal")
+        self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Add button frame at bottom
+        # Get prefix from parent and setup entry field for filename prefix
+        prefix_frame = ctk.CTkFrame(self.main_frame)
+        prefix_frame.pack(fill="x", pady=(10, 0))
+        
+        ctk.CTkLabel(prefix_frame, text="Prefixo:").pack(side="left", padx=5)
+        
+        self.prefix_entry = ctk.CTkEntry(prefix_frame, width=200)
+        self.prefix_entry.pack(side="left", padx=5)
+        self.prefix_entry.insert(0, self.parent.prefix_entry.get())
+        
+        # Bottom button frame
         button_frame = ctk.CTkFrame(self.main_frame)
         button_frame.pack(fill="x", pady=(10, 0))
         
-        # Checkbox for creating ZIP archive
-        self.create_zip_var = tk.BooleanVar(value=True)
+        # Add ZIP checkbox
+        self.create_zip_var = tk.BooleanVar(value=False)
         self.create_zip_checkbox = ctk.CTkCheckBox(button_frame, text="Criar arquivo ZIP", 
-                                    variable=self.create_zip_var)
+                                variable=self.create_zip_var)
         self.create_zip_checkbox.pack(side="left", padx=5)
         
         # Add buttons
@@ -305,6 +341,9 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         for widget in self.scroll_frame.winfo_children():
             widget.destroy()
         
+        # Clear the thumbnails dictionary to avoid stale references
+        self.thumbnails = {}
+        
         # Get all images from manager
         image_ids = self.image_manager.get_all_image_ids()
         if not image_ids:
@@ -312,63 +351,99 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                       font=("Roboto", 16)).pack(pady=50)
             return
         
-        # Create thumbnail grid
+        # Criar uma única moldura horizontal para todas as miniaturas
+        flow_frame = ctk.CTkFrame(self.scroll_frame)
+        flow_frame.pack(fill="x", expand=True, padx=5, pady=5)
+        
+        # Configurar parâmetros das miniaturas
         thumbnail_size = self.image_manager.image_config.get("thumbnail_size", 100)
-        padding = 10
-        grid_cols = 3
-        current_row = 0
-        current_col = 0
+        padding = 5
         
-        # Começamos sem nenhum row_frame inicial (será criado apenas quando necessário)
+        # Armazenar referências para garantir que não sejam coletadas pelo garbage collector
+        self.thumbnails_container = flow_frame
         
-        for image_id in image_ids:
-            # Get image and create thumbnail
-            original_image = self.image_manager.get_image(image_id)
-            if not original_image:
-                continue
-            
-            thumbnail = self.image_manager.create_thumbnail(original_image)
-            
-            # Create new row frame if needed
-            if current_col == 0:
-                row_frame = ctk.CTkFrame(self.scroll_frame)
-                row_frame.pack(fill="x", pady=5)
-            
-            # Create frame for each thumbnail
-            thumb_frame = ctk.CTkFrame(row_frame)
-            thumb_frame.pack(side="left", padx=padding, pady=padding, fill="both", expand=True)
-            
-            # Create PhotoImage from thumbnail
-            thumbnail_tk = ImageTk.PhotoImage(thumbnail)
-            
-            # Create checkbox
-            check_var = tk.BooleanVar(value=True)
-            check = ctk.CTkCheckBox(thumb_frame, text="", variable=check_var, 
-                                 command=lambda id=image_id, var=check_var: self.on_thumbnail_select(id, var))
-            check.pack(anchor="nw", padx=5, pady=5)
-            
-            # Create label for thumbnail
-            label = ctk.CTkLabel(thumb_frame, text="", image=thumbnail_tk)
-            label.image = thumbnail_tk  # Keep reference to prevent garbage collection
-            label.pack(padx=5, pady=5)
-            
-            # Set up double-click event for thumbnail
-            label.bind("<Double-Button-1>", 
-                       lambda e, id=image_id: self.on_thumbnail_double_click(id))
-            
-            # Store reference to checkbox variable
-            self.thumbnails[image_id] = {
-                'var': check_var,
-                'frame': thumb_frame,
-                'label': label,
-                'image': thumbnail_tk
-            }
-            
-            # Update grid position
-            current_col += 1
-            if current_col >= grid_cols:
-                current_col = 0
-                current_row += 1
+        for idx, image_id in enumerate(image_ids):
+            try:
+                # Tentar carregar a imagem do arquivo
+                image_path = self.image_manager.get_image_path(image_id)
+                if not image_path or not os.path.exists(image_path):
+                    continue
+                    
+                # Carregar a imagem do arquivo
+                original_image = Image.open(image_path)
+                if not original_image:
+                    continue
+                
+                thumbnail = self.image_manager.create_thumbnail(original_image)
+                
+                # Create frame for each thumbnail with fixed width for uniformity
+                thumb_width = thumbnail_size + 40  # Ajustar conforme necessário
+                thumb_height = thumbnail_size + 90  # Espaço para checkbox e labels
+                thumb_frame = ctk.CTkFrame(flow_frame, width=thumb_width, height=thumb_height)
+                thumb_frame.pack(side="left", padx=padding, pady=padding)
+                thumb_frame.pack_propagate(False)  # Manter tamanho fixo
+                
+                # Create PhotoImage from thumbnail
+                thumbnail_tk = ImageTk.PhotoImage(thumbnail)
+                
+                # Create checkbox no topo
+                check_var = tk.BooleanVar(value=True)
+                check = ctk.CTkCheckBox(thumb_frame, text="", variable=check_var, 
+                                     command=lambda id=image_id, var=check_var: self.on_thumbnail_select(id, var))
+                check.pack(anchor="nw", padx=5, pady=5)
+                
+                # Create label for thumbnail
+                label = ctk.CTkLabel(thumb_frame, text="", image=thumbnail_tk)
+                label.image = thumbnail_tk  # Keep reference to prevent garbage collection
+                label.pack(padx=5, pady=5)
+                
+                # Get image metadata
+                image_info = self.image_manager.get_image_metadata(image_id)
+                size_info = f"{image_info['width']}x{image_info['height']}"
+                filename = f"{self.prefix_entry.get() or self.image_manager.default_prefix}_{idx + 1}.{self.image_manager.default_format}"
+                
+                # Add image info como labels compactos
+                info_frame = ctk.CTkFrame(thumb_frame, fg_color="transparent")
+                info_frame.pack(fill="x", padx=5, pady=(0, 5))
+                
+                # Size info - fonte menor e mais compacta
+                size_label = ctk.CTkLabel(info_frame, text=f"{size_info}", 
+                                      font=("Roboto", 9))
+                size_label.pack(anchor="w")
+                
+                # Filename info - apenas o número
+                file_number = idx + 1
+                file_label = ctk.CTkLabel(info_frame, text=f"#{file_number}", 
+                                       font=("Roboto", 9, "bold"))
+                file_label.pack(anchor="w")
+                
+                # Criar uma função específica para este ID de imagem para o clique duplo
+                def on_double_click_closure(img_id=image_id):
+                    def handler(event):
+                        self.on_thumbnail_double_click(img_id)
+                    return handler
+                
+                # Set up double-click event for thumbnail usando a closure
+                label.bind("<Double-Button-1>", on_double_click_closure())
+                
+                # Adicionar tooltip com info completa ao passar o mouse (usar label como workaround)
+                tooltip_text = f"Tamanho: {size_info}\nArquivo: {filename}"
+                label.tooltip_text = tooltip_text
+                
+                # Store reference to all important objects to prevent garbage collection
+                self.thumbnails[image_id] = {
+                    'var': check_var,
+                    'frame': thumb_frame,
+                    'label': label,
+                    'image': thumbnail_tk,
+                    'size_label': size_label,
+                    'file_label': file_label,
+                    'check': check,
+                    'info_frame': info_frame
+                }
+                
+            except Exception as e:
+                self.logger.error(f"Erro ao carregar miniatura para imagem {image_id}: {e}")
     
     def on_thumbnail_select(self, image_id: str, var: tk.BooleanVar):
         """Handle individual thumbnail selection"""
@@ -382,16 +457,30 @@ class ImageSelectionDialog(ctk.CTkToplevel):
     def on_thumbnail_double_click(self, image_id: str):
         """Handle double-click on thumbnail to open image viewer"""
         try:
-            # Get image path from image manager
+            # Get image path and metadata from image manager
             image_path = self.image_manager.get_image_path(image_id)
-            if not image_path:
+            if not image_path or not os.path.exists(image_path):
+                self.logger.error(f"Arquivo de imagem não encontrado: {image_path}")
+                messagebox.showerror("Erro", "Arquivo de imagem não encontrado.")
                 return
+            
+            # Get the filename that would be used when saving
+            image_ids = list(self.thumbnails.keys())
+            try:
+                image_index = image_ids.index(image_id) + 1
+            except ValueError:
+                # Fallback se o ID não estiver na lista (não deveria acontecer)
+                image_index = 1
                 
-            # Open image viewer dialog
-            viewer = ImageViewerDialog(self, image_path, image_id)
+            filename = f"{self.prefix_entry.get() or self.image_manager.default_prefix}_{image_index}.{self.image_manager.default_format}"
+                
+            # Open image viewer dialog with additional info
+            self.logger.info(f"Opening image viewer for image {image_id}, path: {image_path}")
+            viewer = ImageViewerDialog(self, image_path, image_id, filename)
             
         except Exception as e:
             self.logger.error(f"Error opening image viewer: {e}")
+            messagebox.showerror("Erro", f"Erro ao abrir a imagem: {str(e)}")
     
     def on_save(self):
         """Save selected images"""
@@ -572,25 +661,35 @@ class ClipboardImageApp(ctk.CTk):
     
     def start_monitoring(self):
         """Start clipboard monitoring"""
-        self.clipboard_monitor.start()
+        if self.monitoring:
+            return
+        
+        # Apenas atualizar o estado, sem limpar imagens existentes
         self.monitoring = True
         
-        # Update UI
-        self.status_label.configure(text="Status: Monitorando clipboard")
+        # Resetar a visualização do preview, mas manter as imagens já capturadas
+        if self.current_image is not None:
+            self.preview_label.configure(text="")
+        else:
+            self.preview_label.configure(text="Aguardando Capturas...")
+            
+        # Atualizar contador com o total atual (mantendo imagens existentes)
+        total_images = len(self.image_manager.get_all_image_ids())
+        self.capture_count = total_images  # Manter o contador acumulado
+        self.image_count_label.configure(text=f"Imagens: {total_images} (Total: {self.capture_count})")
+        
+        # Update button states
         self.start_button.configure(state="disabled")
         self.stop_button.configure(state="normal")
+        self.save_button.configure(state="disabled" if total_images == 0 else "normal")
         
-        # Minimize main window
-        self.minimize()
+        # Start the monitor
+        self.clipboard_monitor.start()
         
-        # Show floating window
-        self.show_floating_window()
-        
-        self.logger.info("Started clipboard monitoring")
-        
-    def minimize(self):
-        """Minimize main window"""
-        self.iconify()
+        # Create floating window and minimize main window
+        self.has_unsaved_images = total_images > 0
+        self.floating_window = FloatingCaptureWindow(self, self.stop_monitoring, border_color="#32CD32")  # Verde claro
+        self.after(100, self.iconify)  # Minimize main window after a short delay
         
     def restore(self):
         """Restore main window"""
