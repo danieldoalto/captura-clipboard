@@ -346,6 +346,10 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.scroll_frame = ctk.CTkScrollableFrame(self.main_frame, orientation="vertical")
         self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
+        # Prefix entry frame
+        prefix_frame = ctk.CTkFrame(self.main_frame)
+        prefix_frame.pack(fill="x", pady=(10, 0))
+        
         ctk.CTkLabel(prefix_frame, text="Prefixo:").pack(side="left", padx=5)
         
         self.prefix_entry = ctk.CTkEntry(prefix_frame, width=200)
