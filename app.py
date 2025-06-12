@@ -626,10 +626,13 @@ class ImageSelectionDialog(ctk.CTkToplevel):
             
             if saved_files:
                 # Show success message
-                count = len(saved_files)
-                msg = f"{count} imagens salvas com sucesso em:\n{directory}"
                 if create_zip:
-                    msg += "\nArquivo ZIP criado."
+                    # When creating ZIP only, saved_files will contain just the ZIP path
+                    zip_path = saved_files[0]
+                    msg = f"Arquivo ZIP salvo com sucesso em:\n{zip_path}"
+                else:
+                    count = len(saved_files)
+                    msg = f"{count} imagens salvas com sucesso em:\n{directory}"
                 messagebox.showinfo("Sucesso", msg)
                 
                 # Mark that images were saved
@@ -770,6 +773,33 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.destroy()
 
 
+class HelpDialog(ctk.CTkToplevel):
+    """
+    Modal dialog for displaying help information from help.md.
+    """
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.title("Ajuda")
+        self.geometry("700x550")
+        self.transient(parent)
+        self.grab_set()
+        self.focus_set()
+
+        try:
+            with open("help.md", "r", encoding="utf-8") as f:
+                help_text = f.read()
+        except FileNotFoundError:
+            help_text = "Arquivo de ajuda (help.md) não encontrado."
+
+        textbox = ctk.CTkTextbox(self, wrap="word", corner_radius=0)
+        textbox.pack(expand=True, fill="both", padx=10, pady=10)
+        textbox.insert("0.0", help_text)
+        textbox.configure(state="disabled")
+
+        close_button = ctk.CTkButton(self, text="Fechar", command=self.destroy)
+        close_button.pack(pady=(0, 10))
+
+
 class ClipboardImageApp(ctk.CTk):
     """
     Main application window for clipboard image capture.
@@ -874,6 +904,13 @@ class ClipboardImageApp(ctk.CTk):
         )
         self.save_button.pack(side="left", padx=5)
         
+        self.help_button = ctk.CTkButton(
+            self.controls_frame,
+            text="Ajuda",
+            command=self.show_help_dialog
+        )
+        self.help_button.pack(side="right", padx=5)
+
         self.exit_button = ctk.CTkButton(
             self.controls_frame, 
             text="Sair", 
@@ -1028,6 +1065,11 @@ class ClipboardImageApp(ctk.CTk):
         # After dialog is closed, check if images were saved
         if hasattr(dialog, 'images_saved') and dialog.images_saved:
             self.has_unsaved_images = False
+
+    def show_help_dialog(self):
+        """Show the help dialog."""
+        dialog = HelpDialog(self)
+        # self.wait_window(dialog) # This would block, which might not be ideal if the user wants to see the main window
     
     def on_close(self):
         """Handle application close"""

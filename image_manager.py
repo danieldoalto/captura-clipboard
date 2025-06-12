@@ -238,33 +238,28 @@ class ImageManager:
                     ordered_selected_ids.append(img_id)
             selected_ids = ordered_selected_ids
         
-        # Save individual images
-        for idx, image_id in enumerate(selected_ids):
-            image_data = self.images[image_id]
-            image = image_data['image']
-            
-            # Criar nome de arquivo com numeração sequencial no formato nn_prefix.ext
-            # Usar zfill(2) para garantir que o número tenha 2 dígitos (com zero à esquerda se necessário)
-            seq_number = str(idx+1).zfill(2)
-            filename = f"{seq_number}_{prefix}.{self.default_format}"
-            filepath = os.path.join(directory, filename)
-            
-            try:
-                image.save(filepath)
-                saved_files.append(filepath)
-                if self.logger:
-                    self.logger.info(f"Saved image to {filepath}")
-            except Exception as e:
-                if self.logger:
-                    self.logger.error(f"Error saving image {filename}: {e}")
-        
-        # Create ZIP archive if requested
-        if create_zip and saved_files:
+        if create_zip:
             try:
                 zip_path = os.path.join(directory, f"{prefix}_images.zip")
                 with zipfile.ZipFile(zip_path, 'w') as zip_file:
-                    for file in saved_files:
-                        zip_file.write(file, os.path.basename(file))
+                    for idx, image_id in enumerate(selected_ids):
+                        image_data = self.images[image_id]
+                        image = image_data['image']
+                        
+                        # Criar nome de arquivo com numeração sequencial no formato nn_prefix.ext
+                        # Usar zfill(2) para garantir que o número tenha 2 dígitos (com zero à esquerda se necessário)
+                        seq_number = str(idx+1).zfill(2)
+                        filename = f"{seq_number}_{prefix}.{self.default_format}"
+                        
+                        try:
+                            image.save(os.path.join(self.temp_dir, filename))
+                            zip_file.write(os.path.join(self.temp_dir, filename), filename)
+                            os.remove(os.path.join(self.temp_dir, filename))
+                            if self.logger:
+                                self.logger.info(f"Saved image to ZIP archive: {filename}")
+                        except Exception as e:
+                            if self.logger:
+                                self.logger.error(f"Error saving image {filename} to ZIP archive: {e}")
                 
                 saved_files.append(zip_path)
                 if self.logger:
@@ -272,6 +267,26 @@ class ImageManager:
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"Error creating ZIP archive: {e}")
+        else:
+            # Save individual images
+            for idx, image_id in enumerate(selected_ids):
+                image_data = self.images[image_id]
+                image = image_data['image']
+                
+                # Criar nome de arquivo com numeração sequencial no formato nn_prefix.ext
+                # Usar zfill(2) para garantir que o número tenha 2 dígitos (com zero à esquerda se necessário)
+                seq_number = str(idx+1).zfill(2)
+                filename = f"{seq_number}_{prefix}.{self.default_format}"
+                filepath = os.path.join(directory, filename)
+                
+                try:
+                    image.save(filepath)
+                    saved_files.append(filepath)
+                    if self.logger:
+                        self.logger.info(f"Saved image to {filepath}")
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error(f"Error saving image {filename}: {e}")
         
         return saved_files
     
