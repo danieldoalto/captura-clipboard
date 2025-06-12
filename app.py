@@ -28,31 +28,41 @@ class ImageViewerDialog(ctk.CTkToplevel):
         # Set title and make resizable
         self.title("Visualizar Imagem")
         self.minsize(400, 300)
+        self.resizable(True, True)
         
         # Load image
         self.image = Image.open(image_path)
         
-        # Calculate window size
-        screen_width = self.winfo_screenwidth() * 0.8  # Use 80% of screen
-        screen_height = self.winfo_screenheight() * 0.8
+        # Calculate window size - garantir espaço suficiente para a imagem
+        screen_width = self.winfo_screenwidth() * 0.9  # Use 90% of screen width max
+        screen_height = self.winfo_screenheight() * 0.8  # Use 80% of screen height max
         
-        window_width = min(self.image.width + 40, screen_width)
-        window_height = min(self.image.height + 100, screen_height)
+        # Adicionar espaço para decorações de janela, barras de rolagem e informações
+        padding_width = 60   # Espaço horizontal para bordas e padding
+        padding_height = 150  # Espaço vertical para bordas, informações e botões
         
-        display_width = window_width - 40
-        display_height = window_height - 100
+        # Calcular tamanho da janela para acomodar a imagem completa
+        window_width = min(self.image.width + padding_width, screen_width)
+        window_height = min(self.image.height + padding_height, screen_height)
         
-        # Scale the window to fit the image but not exceed screen constraints
-        display_width = min(self.image.width, display_width)
-        display_height = min(self.image.height, display_height)
-        # Add space for window decorations and buttons
-        window_width = display_width + 40
-        window_height = display_height + 80
+        # Se a imagem for maior que o espaço disponível na tela, usar o máximo possível
+        # mas manter barras de rolagem
+        if window_width >= screen_width or window_height >= screen_height:
+            window_width = min(window_width, screen_width)
+            window_height = min(window_height, screen_height)
+        
+        # Garantir tamanho mínimo razoável
+        window_width = max(window_width, 500)  # Mínimo de 500px de largura
+        window_height = max(window_height, 400)  # Mínimo de 400px de altura
+        
+        # Calcular o tamanho disponível para exibição da imagem
+        display_width = window_width - padding_width
+        display_height = window_height - padding_height
         
         # Position window centered
-        x = (screen_width - window_width) // 2
-        y = (screen_height - window_height) // 2
-        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        x = (self.winfo_screenwidth() - window_width) // 2
+        y = (self.winfo_screenheight() - window_height) // 2
+        self.geometry(f"{int(window_width)}x{int(window_height)}+{x}+{y}")
         
         # Setup UI
         self.setup_ui(display_width, display_height)
@@ -69,55 +79,81 @@ class ImageViewerDialog(ctk.CTkToplevel):
         main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         # Create a scrollable frame for the image
-        scroll_frame = ctk.CTkScrollableFrame(main_frame)
+        # Usar orientação "both" para permitir rolagem horizontal e vertical se necessário
+        scroll_frame = ctk.CTkScrollableFrame(main_frame, orientation="vertical")
         scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Prepare the image for display
-        if display_width < self.image.width or display_height < self.image.height:
-            # Scale down for display if needed
+        # Verificar se a imagem é maior que o espaço disponível
+        if self.image.width > display_width or self.image.height > display_height:
+            # Calcular a proporção para redimensionar mantendo a proporção original
             img_ratio = min(display_width/self.image.width, display_height/self.image.height)
             display_size = (int(self.image.width * img_ratio), int(self.image.height * img_ratio))
             display_img = self.image.resize(display_size, Image.LANCZOS)
-        else:
-            display_img = self.image
             
-        # Convert to PhotoImage
+            # Adicionar informação sobre escala
+            scale_percent = int(img_ratio * 100)
+            self.scaled_display = True
+            self.scale_percent = scale_percent
+        else:
+            # Usar a imagem original se couber no espaço disponível
+            display_img = self.image
+            self.scaled_display = False
+        
+        # Converter para PhotoImage para exibição
         self.photo_image = ImageTk.PhotoImage(display_img)
         
-        # Image display label
-        self.image_label = ctk.CTkLabel(scroll_frame, image=self.photo_image, text="")
-        self.image_label.pack(padx=5, pady=5)
+        # Criar um canvas para exibir a imagem com rolagem se necessário
+        self.canvas = tk.Canvas(scroll_frame, 
+                               width=min(display_img.width, display_width),
+                               height=min(display_img.height, display_height),
+                               highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
         
-        # Image info and close button frame
+        # Exibir a imagem no canvas
+        self.canvas.create_image(0, 0, anchor="nw", image=self.photo_image)
+        
+        # Configurar o canvas para rolagem
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+        
+        # Informações da imagem e botão de fechar
         bottom_frame = ctk.CTkFrame(main_frame)
         bottom_frame.pack(fill="x", pady=(10, 0))
         
-        # Info frame for multiple lines of information
+        # Frame para informações em múltiplas linhas
         info_frame = ctk.CTkFrame(bottom_frame, fg_color="transparent")
         info_frame.pack(side="left", fill="y", padx=5, pady=5)
         
-        # Display image dimensions
+        # Exibir dimensões da imagem
         size_text = f"Tamanho: {self.image.width}x{self.image.height} pixels"
-        ctk.CTkLabel(info_frame, text=size_text).pack(anchor="w")
+        ctk.CTkLabel(info_frame, text=size_text, font=("Roboto", 12)).pack(anchor="w")
         
-        # Display file format and size in KB
-        file_size = os.path.getsize(os.path.join(self.parent.image_manager.temp_dir, f"{self.image_id}.{self.parent.image_manager.default_format}")) / 1024
-        format_text = f"Formato: {self.parent.image_manager.default_format.upper()}, Tamanho: {file_size:.1f} KB"
-        ctk.CTkLabel(info_frame, text=format_text).pack(anchor="w")
+        # Exibir formato e tamanho em KB
+        file_path = os.path.join(self.parent.image_manager.temp_dir, 
+                               f"{self.image_id}.{self.parent.image_manager.default_format}")
+        if os.path.exists(file_path):
+            file_size = os.path.getsize(file_path) / 1024
+            format_text = f"Formato: {self.parent.image_manager.default_format.upper()}, Tamanho: {file_size:.1f} KB"
+            ctk.CTkLabel(info_frame, text=format_text, font=("Roboto", 12)).pack(anchor="w")
         
-        # Display filename (if provided)
+        # Exibir informação de escala se a imagem foi redimensionada
+        if hasattr(self, 'scaled_display') and self.scaled_display:
+            scale_text = f"Exibindo em {self.scale_percent}% do tamanho original"
+            ctk.CTkLabel(info_frame, text=scale_text, font=("Roboto", 12, "italic")).pack(anchor="w")
+        
+        # Exibir nome do arquivo (se fornecido)
         if self.filename:
             filename_text = f"Nome do arquivo: {self.filename}"
-            ctk.CTkLabel(info_frame, text=filename_text).pack(anchor="w")
+            ctk.CTkLabel(info_frame, text=filename_text, font=("Roboto", 12)).pack(anchor="w")
         
-        # Close button
+        # Botão de fechar
         close_btn = ctk.CTkButton(
             bottom_frame, 
             text="Fechar", 
             command=self.destroy,
-            width=100
+            width=100,
+            font=("Roboto", 12, "bold")
         )
-        close_btn.pack(side="right", padx=5)
+        close_btn.pack(side="right", padx=10, pady=5)
 
 
 class FloatingCaptureWindow(ctk.CTkToplevel):

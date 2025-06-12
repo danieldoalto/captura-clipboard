@@ -232,8 +232,10 @@ class ImageManager:
             image_data = self.images[image_id]
             image = image_data['image']
             
-            # Create filename with sequential numbering
-            filename = f"{prefix}_{idx+1}.{self.default_format}"
+            # Criar nome de arquivo com numeração sequencial no formato nn_prefix.ext
+            # Usar zfill(2) para garantir que o número tenha 2 dígitos (com zero à esquerda se necessário)
+            seq_number = str(idx+1).zfill(2)
+            filename = f"{seq_number}_{prefix}.{self.default_format}"
             filepath = os.path.join(directory, filename)
             
             try:
