@@ -940,42 +940,21 @@ class ClipboardImageApp(ctk.CTk):
         self.main_frame = ctk.CTkFrame(self)
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Create controls frame at top
-        self.controls_frame = ctk.CTkFrame(self.main_frame)
-        self.controls_frame.pack(fill="x", padx=10, pady=10)
-        
+        # Create top frame for prefix input and main action buttons
+        self.top_frame = ctk.CTkFrame(self.main_frame)
+        self.top_frame.pack(fill="x", padx=10, pady=(10, 5))
+
         # Prefix input
-        prefix_label = ctk.CTkLabel(self.controls_frame, text="Prefixo:")
+        prefix_label = ctk.CTkLabel(self.top_frame, text="Prefixo:")
         prefix_label.pack(side="left", padx=5)
-        
-        self.prefix_entry = ctk.CTkEntry(self.controls_frame, width=200)
+
+        self.prefix_entry = ctk.CTkEntry(self.top_frame, width=200)
         self.prefix_entry.insert(0, self.image_manager.default_prefix)
         self.prefix_entry.pack(side="left", padx=5)
-        
-        # Control buttons
 
-        # Right-aligned buttons (packed in reverse order of appearance)
-        self.exit_button = ctk.CTkButton(
-            self.controls_frame, 
-            text="Sair", 
-            command=self.on_close,
-            width=90, # Smaller fixed width
-            fg_color="#6c757d",
-            hover_color="#5a6268"
-        )
-        self.exit_button.pack(side="right", padx=5)
-
-        self.help_button = ctk.CTkButton(
-            self.controls_frame,
-            text="Ajuda",
-            command=self.show_help_dialog,
-            width=90 # Smaller fixed width
-        )
-        self.help_button.pack(side="right", padx=5)
-
-        # Main action buttons are packed to the left
+        # Main action buttons on the same top line
         self.start_button = ctk.CTkButton(
-            self.controls_frame, 
+            self.top_frame, 
             text="Iniciar Captura", 
             command=self.start_monitoring,
             fg_color="#28a745",
@@ -984,7 +963,7 @@ class ClipboardImageApp(ctk.CTk):
         self.start_button.pack(side="left", padx=5)
         
         self.stop_button = ctk.CTkButton(
-            self.controls_frame, 
+            self.top_frame, 
             text="Pausar Captura", 
             command=self.stop_monitoring,
             state="disabled",
@@ -994,7 +973,7 @@ class ClipboardImageApp(ctk.CTk):
         self.stop_button.pack(side="left", padx=5)
         
         self.save_button = ctk.CTkButton(
-            self.controls_frame, 
+            self.top_frame, 
             text="Verificar Imagens", 
             command=self.show_save_dialog,
             state="disabled",
@@ -1003,22 +982,43 @@ class ClipboardImageApp(ctk.CTk):
         )
         self.save_button.pack(side="left", padx=5)
         
-        # Status label
-        self.status_frame = ctk.CTkFrame(self.main_frame)
-        self.status_frame.pack(fill="x", padx=10, pady=(0, 10))
-        
-        self.status_label = ctk.CTkLabel(self.status_frame, text="Status: Pronto")
-        self.status_label.pack(side="left", padx=5)
-        
-        self.image_count_label = ctk.CTkLabel(self.status_frame, text="Imagens: 0")
-        self.image_count_label.pack(side="right", padx=5)
-        
-        # Create image preview frame
+        # Create image preview frame (middle section)
         self.preview_frame = ctk.CTkFrame(self.main_frame)
         self.preview_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         self.preview_label = ctk.CTkLabel(self.preview_frame, text="Nenhuma imagem capturada")
         self.preview_label.pack(fill="both", expand=True)
+        
+        # Create status bar frame at bottom
+        self.status_frame = ctk.CTkFrame(self.main_frame)
+        self.status_frame.pack(fill="x", padx=10, pady=(5, 10))
+        
+        # Status info on the left
+        self.status_label = ctk.CTkLabel(self.status_frame, text="Status: Pronto")
+        self.status_label.pack(side="left", padx=5)
+        
+        # Image count in the middle
+        self.image_count_label = ctk.CTkLabel(self.status_frame, text="Imagens: 0")
+        self.image_count_label.pack(side="left", padx=20)
+        
+        # Help and Exit buttons on the right side of status bar
+        self.help_button = ctk.CTkButton(
+            self.status_frame,
+            text="Ajuda",
+            command=self.show_help_dialog,
+            width=90 # Smaller fixed width
+        )
+        self.help_button.pack(side="right", padx=5)
+        
+        self.exit_button = ctk.CTkButton(
+            self.status_frame, 
+            text="Sair", 
+            command=self.on_close,
+            width=90, # Smaller fixed width
+            fg_color="#6c757d",
+            hover_color="#5a6268"
+        )
+        self.exit_button.pack(side="right", padx=5)
     
     def start_monitoring(self):
         """Start clipboard monitoring"""

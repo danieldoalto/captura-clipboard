@@ -2,17 +2,17 @@
 
 ## Objetivo
 
-Este aplicativo foi projetado para simplificar o processo de captura e salvamento de múltiplas imagens da área de transferência. É ideal para criar tutoriais, documentação ou qualquer tarefa que exija a coleta de várias capturas de tela em sequência.
+Este aplicativo foi projetado para simplificar o processo de captura e salvamento de múltiplas imagens da área de transferência com o objetivo do processamento das imagens, tais como OCR.
 
 ## Funcionamento
 
 1. **Iniciar Captura**: Clique no botão "Iniciar Captura" na janela principal. A janela será minimizada e uma pequena janela flutuante aparecerá para indicar que a captura está ativa.
-2. **Capturar Imagens**: Use sua ferramenta de captura de tela preferida (ex: Ferramenta de Captura do Windows, Lightshot, etc.) para copiar imagens para a área de transferência. Cada nova imagem copiada será automaticamente detectada e adicionada à coleção.
-3. **Parar Captura**: Clique no botão "Parar" na janela flutuante para encerrar a sessão de captura. A janela principal será restaurada.
+2. **Capturar Imagens**: Use sua ferramenta de captura de tela preferida (ex: Ferramenta de Captura do Windows, Lightshot, etc.) para copiar imagens para a área de transferência. Cada nova imagem copiada será automaticamente detectada e adicionada à coleção. Pode ser utilizada a tecla printscreen do teclado e ctrl + c para copiar a imagem.
+3. **Pausar Captura**: Clique no botão "Pausar" na janela principal ou na janela flutuante para pausar a sessão de captura. A janela principal será restaurada.
 4. **Selecionar e Salvar**:
    * Clique em "Selecionar Imagens" para abrir a janela de gerenciamento.
    * Nesta tela, você pode ver miniaturas de todas as imagens capturadas.
-   * **Reordenar**: Arraste e solte as miniaturas para mudar a ordem.
+   * **Reordenar**: Arraste e solte as miniaturas uma acima da outra para mudar a ordem.
    * **Selecionar**: Marque ou desmarque as imagens que deseja salvar.
    * **Prefixo**: Defina um nome (prefixo) para os arquivos. Os arquivos serão salvos no formato `01_prefixo.png`, `02_prefixo.png`, etc.
    * **Salvar**:
