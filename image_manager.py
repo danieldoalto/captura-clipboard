@@ -164,12 +164,13 @@ class ImageManager:
         """
         if image_id in self.images:
             img_data = self.images[image_id]
-            return {
-                'width': img_data.get('width', 0),
-                'height': img_data.get('height', 0),
-                'timestamp': img_data.get('timestamp', datetime.now())
-            }
-        return {'width': 0, 'height': 0, 'timestamp': datetime.now()}
+            if self.logger:
+                self.logger.debug(f"Returning metadata for {image_id}: {self.images[image_id]}")
+            return self.images[image_id] # Return the full dictionary
+    
+        if self.logger: # Log if image_id not found
+            self.logger.warning(f"Metadata requested for non-existent image_id: {image_id}")
+        return {} # Return an empty dict if not found
     
     def get_thumbnail(self, image_id: str) -> Optional[Image.Image]:
         """
