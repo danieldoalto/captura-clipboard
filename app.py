@@ -10,6 +10,8 @@ from typing import Dict, List, Optional, Callable
 from logger import setup_logger
 from clipboard_monitor import ClipboardMonitor
 from image_manager import ImageManager
+import re
+from customtkinter import CTkFont
 
 
 class ImageViewerDialog(ctk.CTkToplevel):
@@ -785,19 +787,95 @@ class HelpDialog(ctk.CTkToplevel):
         self.grab_set()
         self.focus_set()
 
+        default_font_family = "Arial"
+        default_font_size = 12
+        # Ensure CTkFont is imported: from customtkinter import CTkFont (should be at the top of the file)
+
+        textbox = ctk.CTkTextbox(self, wrap="word", corner_radius=0, font=ctk.CTkFont(family=default_font_family, size=default_font_size))
+        textbox.pack(expand=True, fill="both", padx=10, pady=10)
+
         try:
             with open("help.md", "r", encoding="utf-8") as f:
                 help_text = f.read()
         except FileNotFoundError:
             help_text = "Arquivo de ajuda (help.md) não encontrado."
+            # Initialize fonts even if file not found, so tag_config doesn't fail if help_text is just the error message
+        
+        # Final styling using supported tag_config properties (font is forbidden)
+        textbox.tag_config("h1", spacing3=15, spacing1=5, underline=True)
+        textbox.tag_config("h2", spacing3=12, spacing1=4, underline=True)
+        textbox.tag_config("h3", spacing3=10, spacing1=3, underline=True)
+        # Bold and italic cannot be visually styled with font changes. Spacing/margins are not ideal for inline text.
+        # We will apply no special styling for bold/italic as a result.
+        textbox.tag_config("list_item", lmargin1=20, lmargin2=20, spacing1=2)
 
-        textbox = ctk.CTkTextbox(self, wrap="word", corner_radius=0)
-        textbox.pack(expand=True, fill="both", padx=10, pady=10)
-        textbox.insert("0.0", help_text)
+        inline_pattern = re.compile(r"(\*\*(.*?)\*\*)|(\*+(.*?)\*+)|(_+(.*?)_+)") # Adjusted regex for *italic* and _italic_
+
+        for line in help_text.splitlines():
+            stripped_line = line.strip()
+            
+            line_level_tags = []
+            text_to_process = line 
+
+            if stripped_line.startswith("### "):
+                text_to_process = stripped_line[4:]
+                line_level_tags.append("h3")
+            elif stripped_line.startswith("## "):
+                text_to_process = stripped_line[3:]
+                line_level_tags.append("h2")
+            elif stripped_line.startswith("# "):
+                text_to_process = stripped_line[2:]
+                line_level_tags.append("h1")
+            elif stripped_line.startswith(tuple([prefix + " " for prefix in "*-+"])):
+                # Handles "* ", "- ", "+ " for list items
+                text_to_process = stripped_line[2:]
+                line_level_tags.append("list_item")
+            
+            segments = []
+            last_match_end = 0
+            for match in inline_pattern.finditer(text_to_process):
+                match_start, match_end = match.span()
+
+                if match_start > last_match_end:
+                    segments.append((text_to_process[last_match_end:match_start], []))
+                
+                inline_segment_text = ""
+                inline_segment_tags = []
+
+                if match.group(1): # Bold: **text**
+                    inline_segment_text = match.group(2)
+                    inline_segment_tags.append("bold")
+                elif match.group(3): # Italic: *text* or ***text*** (handle ** first if needed)
+                    # This regex `(\*+(.*?)\*+)` might be too greedy or misinterpret bold-italic.
+                    # For simplicity, let's assume *text* is italic. More complex parsing needed for ***text***.
+                    inline_segment_text = match.group(4)
+                    inline_segment_tags.append("italic")
+                elif match.group(5): # Italic: _text_
+                    inline_segment_text = match.group(6)
+                    inline_segment_tags.append("italic")
+                
+                if inline_segment_text: # Ensure we have content to add
+                    segments.append((inline_segment_text, inline_segment_tags))
+                else: # If regex matched but no valid group, append the matched text itself without special tags
+                    segments.append((text_to_process[match_start:match_end], []))
+                last_match_end = match_end
+            
+            if last_match_end < len(text_to_process):
+                segments.append((text_to_process[last_match_end:], []))
+            
+            if not segments and text_to_process: # Ensure non-empty lines without any markdown are processed
+                 segments.append((text_to_process, []))
+
+            for text_segment, specific_inline_tags in segments:
+                current_segment_tags = tuple(line_level_tags + specific_inline_tags)
+                if text_segment: 
+                    textbox.insert("insert", text_segment, current_segment_tags)
+            
+            textbox.insert("insert", "\n")
+
         textbox.configure(state="disabled")
-
         close_button = ctk.CTkButton(self, text="Fechar", command=self.destroy)
-        close_button.pack(pady=(0, 10))
+        close_button.pack(pady=10)
 
 
 class ClipboardImageApp(ctk.CTk):
@@ -842,7 +920,7 @@ class ClipboardImageApp(ctk.CTk):
         # Configure window
         app_config = self.config.get('application', {})
         self.title(app_config.get('title', 'Captura Clipboard'))
-        self.geometry(f"{app_config.get('width', 800)}x{app_config.get('height', 600)}")
+        self.geometry(f"{app_config.get('width', 950)}x{app_config.get('height', 600)}")
         self.minsize(600, 400)
         
         # Set appearance mode
@@ -875,6 +953,27 @@ class ClipboardImageApp(ctk.CTk):
         self.prefix_entry.pack(side="left", padx=5)
         
         # Control buttons
+
+        # Right-aligned buttons (packed in reverse order of appearance)
+        self.exit_button = ctk.CTkButton(
+            self.controls_frame, 
+            text="Sair", 
+            command=self.on_close,
+            width=90, # Smaller fixed width
+            fg_color="#6c757d",
+            hover_color="#5a6268"
+        )
+        self.exit_button.pack(side="right", padx=5)
+
+        self.help_button = ctk.CTkButton(
+            self.controls_frame,
+            text="Ajuda",
+            command=self.show_help_dialog,
+            width=90 # Smaller fixed width
+        )
+        self.help_button.pack(side="right", padx=5)
+
+        # Main action buttons are packed to the left
         self.start_button = ctk.CTkButton(
             self.controls_frame, 
             text="Iniciar Captura", 
@@ -903,22 +1002,6 @@ class ClipboardImageApp(ctk.CTk):
             hover_color="#218838"
         )
         self.save_button.pack(side="left", padx=5)
-        
-        self.help_button = ctk.CTkButton(
-            self.controls_frame,
-            text="Ajuda",
-            command=self.show_help_dialog
-        )
-        self.help_button.pack(side="right", padx=5)
-
-        self.exit_button = ctk.CTkButton(
-            self.controls_frame, 
-            text="Sair", 
-            command=self.on_close,
-            fg_color="#6c757d",
-            hover_color="#5a6268"
-        )
-        self.exit_button.pack(side="right", padx=5)
         
         # Status label
         self.status_frame = ctk.CTkFrame(self.main_frame)
