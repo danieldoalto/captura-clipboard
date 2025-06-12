@@ -211,8 +211,8 @@ class FloatingCaptureWindow(ctk.CTkToplevel):
         border_frame.pack(fill="both", expand=True)
         
         # Main container com padding menor para mostrar a borda
-        main_frame = ctk.CTkFrame(border_frame)
-        main_frame.pack(fill="both", expand=True, padx=self.border_width, pady=self.border_width)
+        self.main_frame = ctk.CTkFrame(border_frame, corner_radius=10, fg_color="#202060", border_width=self.border_width, border_color=self.border_color)  # Debug: Dark blue
+        self.main_frame.pack(fill="both", expand=True, padx=self.border_width, pady=self.border_width)
         
         # Make the entire window draggable
         self.bind("<ButtonPress-1>", self.start_drag)
@@ -220,7 +220,8 @@ class FloatingCaptureWindow(ctk.CTkToplevel):
         self.bind("<B1-Motion>", self.on_drag)
         
         # Info frame (top)
-        info_frame = ctk.CTkFrame(main_frame)
+        self.content_frame = ctk.CTkFrame(self.main_frame, corner_radius=8, fg_color="#303070")  # Debug: Slightly lighter blue
+        info_frame = self.content_frame # Use self.content_frame for subsequent packing
         info_frame.pack(fill="x", pady=(0, 5))
         
         # Capture count
@@ -232,7 +233,7 @@ class FloatingCaptureWindow(ctk.CTkToplevel):
         self.size_label.pack(side="right")
         
         # Button frame (bottom)
-        button_frame = ctk.CTkFrame(main_frame)
+        button_frame = ctk.CTkFrame(self.main_frame)
         button_frame.pack(fill="x", pady=(5, 0))
         
         # Stop button
@@ -279,6 +280,9 @@ class FloatingCaptureWindow(ctk.CTkToplevel):
             self.size_label.configure(text=f"Tamanho: {self.last_image_size}")
 
 
+# End of FloatingCaptureWindow class
+
+
 class ImageSelectionDialog(ctk.CTkToplevel):
     """
     Modal dialog for selecting images to save.
@@ -291,6 +295,11 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.image_manager = image_manager
         self.logger = parent.logger
         self.images_saved = False  # Track if images were saved
+        self.has_unsaved_changes = False  # Track if order has changed but not applied
+        self.original_order = []  # Original order of images
+        self.current_order = []  # Current order after drag and drop
+        self.drag_source = None  # Current thumbnail being dragged
+        self.drop_target = None  # Where the thumbnail will be dropped
         
         # Configure window
         self.title("Selecionar Imagens")
@@ -337,10 +346,6 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.scroll_frame = ctk.CTkScrollableFrame(self.main_frame, orientation="vertical")
         self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
-        # Get prefix from parent and setup entry field for filename prefix
-        prefix_frame = ctk.CTkFrame(self.main_frame)
-        prefix_frame.pack(fill="x", pady=(10, 0))
-        
         ctk.CTkLabel(prefix_frame, text="Prefixo:").pack(side="left", padx=5)
         
         self.prefix_entry = ctk.CTkEntry(prefix_frame, width=200)
@@ -363,6 +368,17 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         
         self.save_button = ctk.CTkButton(button_frame, text="Salvar Selecionadas", command=self.on_save)
         self.save_button.pack(side="right", padx=5)
+        
+        # Add apply changes button
+        self.apply_button = ctk.CTkButton(
+            button_frame, 
+            text="Aplicar Alterações", 
+            command=self.apply_changes,
+            state="disabled",
+            fg_color="#17a2b8",
+            hover_color="#138496"
+        )
+        self.apply_button.pack(side="right", padx=5)
         
         # Dictionary to store thumbnail data
         self.thumbnails: Dict[str, Dict] = {}
@@ -394,6 +410,15 @@ class ImageSelectionDialog(ctk.CTkToplevel):
             ctk.CTkLabel(self.scroll_frame, text="Nenhuma imagem capturada", 
                       font=("Roboto", 16)).pack(pady=50)
             return
+            
+        # Initialize ordering if needed
+        if not self.original_order:
+            self.original_order = image_ids.copy()
+        
+        # Initialize or update current_order if needed
+        if not self.current_order or set(self.current_order) != set(image_ids):
+            # If images were added or removed, reset the current order
+            self.current_order = image_ids.copy()
         
         # Criar um container principal para organizar as miniaturas em grade
         main_container = ctk.CTkFrame(self.scroll_frame)
@@ -406,12 +431,14 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         
         # Armazenar referências para garantir que não sejam coletadas pelo garbage collector
         self.thumbnails_container = main_container
-        
+
+
         # Criar frames para cada linha de miniaturas
         current_row = None
         current_col = 0
         
-        for idx, image_id in enumerate(image_ids):
+        # Use current_order instead of image_ids to respect the custom ordering
+        for idx, image_id in enumerate(self.current_order):
             try:
                 # Criar nova linha se necessário
                 if current_col == 0 or current_col >= max_columns:
@@ -444,15 +471,27 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                 thumb_frame.pack(side="left", padx=padding, pady=padding, fill="both", expand=True)
                 thumb_frame.pack_propagate(False)  # Manter tamanho fixo
                 
+                # Store image_id as attribute for drag and drop identification
+                thumb_frame.image_id = image_id
+                
                 # Get image metadata
                 image_info = self.image_manager.get_image_metadata(image_id)
                 size_info = f"{image_info['width']}x{image_info['height']}"
                 file_number = idx + 1
-                filename = f"{self.prefix_entry.get() or self.image_manager.default_prefix}_{idx + 1}.{self.image_manager.default_format}"
+                # Format with leading zero for numbers < 10
+                seq_number = str(file_number).zfill(2)
+                prefix = self.prefix_entry.get().strip() or self.image_manager.default_prefix
+                filename = f"{seq_number}_{prefix}.{self.image_manager.default_format}"
                 
                 # Adicionar informações ACIMA da miniatura
                 info_frame = ctk.CTkFrame(thumb_frame, fg_color="transparent")
                 info_frame.pack(fill="x", padx=5, pady=(5, 0))
+
+                # Bind drag events to info_frame as well to improve UX
+                # The image_id captured here corresponds to the thumbnail this info_frame belongs to.
+                info_frame.bind("<ButtonPress-1>", lambda event, id=image_id: self.start_drag(event, id))
+                info_frame.bind("<B1-Motion>", lambda event, id=image_id: self.perform_drag_motion(event, id))
+                info_frame.bind("<ButtonRelease-1>", lambda event, id=image_id: self.end_drag(event, id))
                 
                 # Checkbox para seleção
                 check_var = tk.BooleanVar(value=True)
@@ -487,8 +526,19 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                 # Set up double-click event for thumbnail usando a closure
                 label.bind("<Double-Button-1>", on_double_click_closure())
                 
+                # Setup drag and drop events for reordering
+                # Using lambdas with default arguments to capture the current image_id
+                thumb_frame.bind("<ButtonPress-1>", lambda event, id=image_id: self.start_drag(event, id))
+                thumb_frame.bind("<B1-Motion>", lambda event, id=image_id: self.perform_drag_motion(event, id))
+                thumb_frame.bind("<ButtonRelease-1>", lambda event, id=image_id: self.end_drag(event, id))
+                
+                # Also bind drag events to the image label to ensure good UX
+                label.bind("<ButtonPress-1>", lambda event, id=image_id: self.start_drag(event, id))
+                label.bind("<B1-Motion>", lambda event, id=image_id: self.perform_drag_motion(event, id))
+                label.bind("<ButtonRelease-1>", lambda event, id=image_id: self.end_drag(event, id))
+                
                 # Adicionar tooltip com info completa ao passar o mouse
-                tooltip_text = f"Tamanho: {size_info}\nArquivo: {filename}"
+                tooltip_text = f"Tamanho: {size_info}\nArquivo: {filename}\nClique e arraste para reordenar"
                 label.tooltip_text = tooltip_text
                 
                 # Store reference to all important objects to prevent garbage collection
@@ -535,8 +585,10 @@ class ImageSelectionDialog(ctk.CTkToplevel):
             except ValueError:
                 # Fallback se o ID não estiver na lista (não deveria acontecer)
                 image_index = 1
-                
-            filename = f"{self.prefix_entry.get() or self.image_manager.default_prefix}_{image_index}.{self.image_manager.default_format}"
+            
+            # Format with leading zero for numbers < 10
+            prefix = self.prefix_entry.get().strip() or self.image_manager.default_prefix
+            filename = f"{image_index:02d}_{prefix}.{self.image_manager.default_format}"
                 
             # Open image viewer dialog with additional info
             self.logger.info(f"Opening image viewer for image {image_id}, path: {image_path}")
@@ -565,8 +617,8 @@ class ImageSelectionDialog(ctk.CTkToplevel):
             # Get ZIP option
             create_zip = self.create_zip_var.get()
             
-            # Save images
-            saved_files = self.image_manager.save_images(prefix, directory, create_zip)
+            # Save images with current order for proper numbering
+            saved_files = self.image_manager.save_images(prefix, directory, create_zip, custom_order=self.current_order)
             
             if saved_files:
                 # Show success message
@@ -588,8 +640,129 @@ class ImageSelectionDialog(ctk.CTkToplevel):
             self.parent.logger.error(f"Error saving images: {e}")
             messagebox.showerror("Erro", f"Erro ao salvar imagens: {str(e)}")
     
+    def start_drag(self, event, image_id):
+        """Start dragging a thumbnail"""
+        if image_id in self.thumbnails:
+            self.drag_source = image_id
+            # Visual feedback - change background color of the dragged thumbnail
+            self.thumbnails[image_id]['frame'].configure(fg_color="#3a7ebf")
+            self.logger.debug(f"Started dragging thumbnail {image_id}")
+    
+    def perform_drag_motion(self, event, originating_widget_image_id):
+        """Handle mouse motion during a drag operation. Identifies drop target."""
+        if not self.drag_source:
+            return
+
+        # Determine the widget currently under the mouse cursor.
+        # event.x and event.y are relative to the widget that received the event (originating_widget_image_id's frame/label).
+        # We need to find which thumbnail frame the absolute mouse position (event.x_root, event.y_root) is over.
+        mouse_x_root = event.x_root
+        mouse_y_root = event.y_root
+
+        new_potential_drop_target = None
+        for image_id, data in self.thumbnails.items():
+            frame = data['frame']
+            if not frame.winfo_exists(): # Skip if frame somehow got destroyed
+                continue
+
+            frame_x = frame.winfo_rootx()
+            frame_y = frame.winfo_rooty()
+            frame_width = frame.winfo_width()
+            frame_height = frame.winfo_height()
+
+            # Check if the absolute mouse position is within this frame's bounds
+            if (frame_x <= mouse_x_root < frame_x + frame_width and
+                frame_y <= mouse_y_root < frame_y + frame_height):
+                if image_id != self.drag_source: # Can't drop onto itself
+                    new_potential_drop_target = image_id
+                break # Found the frame under the mouse
+
+        # Update drop_target and visual feedback if it has changed
+        if new_potential_drop_target != self.drop_target:
+            # Reset visual feedback for the old drop_target (if any)
+            if self.drop_target and self.drop_target in self.thumbnails and self.thumbnails[self.drop_target]['frame'].winfo_exists():
+                self.thumbnails[self.drop_target]['frame'].configure(fg_color="transparent") # Or original theme color
+            
+            self.drop_target = new_potential_drop_target
+            self.logger.debug(f"Dragging. Potential drop target: {self.drop_target}")
+
+            # Apply visual feedback for the new drop_target (if any)
+            if self.drop_target and self.drop_target in self.thumbnails and self.thumbnails[self.drop_target]['frame'].winfo_exists():
+                self.thumbnails[self.drop_target]['frame'].configure(fg_color="#2a5e8f") # Highlight color
+        
+    # The old on_drag_over might be removed or repurposed later if not needed.
+    # For now, we keep it but it's not bound to <Enter> on draggable items anymore.
+    def on_drag_over(self, event, target_image_id):
+        """Handle drag over a thumbnail (currently not used by individual thumbnail <Enter> events)"""
+        self.logger.debug(f"on_drag_over (not primary for DND): source={self.drag_source}, target={target_image_id}")
+        # Original logic can remain here if used by other parts, or be removed if fully superseded.
+        if self.drag_source and target_image_id != self.drag_source:
+            # This logic is now primarily in perform_drag_motion
+            pass
+    
+    def end_drag(self, event, _event_target_id): # _event_target_id is from the widget that received ButtonRelease
+        """End dragging and reorder thumbnails if needed"""
+        # Use self.drop_target, which is set by on_drag_over, as the definitive drop location.
+        if self.drag_source and self.drop_target and self.drag_source != self.drop_target:
+            self.logger.debug(f"Dropping {self.drag_source} onto {self.drop_target}")
+            
+            # Find positions in current order
+            try:
+                source_idx = self.current_order.index(self.drag_source)
+                target_idx = self.current_order.index(self.drop_target)
+                
+                # Reorder the current_order list
+                item = self.current_order.pop(source_idx)
+                self.current_order.insert(target_idx, item)
+                
+                # Set unsaved changes flag
+                if self.current_order != self.original_order:
+                    self.has_unsaved_changes = True
+                    self.apply_button.configure(state="normal")
+                
+                # Reload thumbnails to reflect new order
+                self.load_thumbnails()
+                
+            except ValueError as e:
+                self.logger.error(f"Error reordering thumbnails: {e}")
+        
+        # Reset drag state and visual feedback
+        for img_id, data in self.thumbnails.items():
+            data['frame'].configure(fg_color="transparent") # Or reset to original theme color if 'transparent' is problematic
+        
+        self.drag_source = None
+        self.drop_target = None # Reset drop_target as well
+        self.drop_target = None
+    
+    def apply_changes(self):
+        """Apply the reordering changes"""
+        if self.has_unsaved_changes:
+            self.logger.info("Applying image reordering changes")
+            # Update the original order to match the current order
+            self.original_order = self.current_order.copy()
+            self.has_unsaved_changes = False
+            self.apply_button.configure(state="disabled")
+            
+            # Reload thumbnails to update file numbers
+            self.load_thumbnails()
+            
+            messagebox.showinfo("Sucesso", "Alterações de ordenamento aplicadas com sucesso!")
+            
     def on_close(self):
         """Handle dialog close"""
+        # Check for unsaved changes
+        if self.has_unsaved_changes:
+            response = messagebox.askyesnocancel(
+                "Alterações não salvas",
+                "Existem alterações na ordem das imagens não aplicadas. Deseja aplicar antes de sair?",
+                icon="warning"
+            )
+            
+            if response is None:  # Cancel
+                return
+            elif response:  # Yes - apply changes
+                self.apply_changes()
+        
         self.destroy()
 
 

@@ -200,7 +200,7 @@ class ImageManager:
         if self.logger:
             self.logger.info("Cleared all images")
     
-    def save_images(self, prefix: str, directory: str, create_zip: bool = False) -> List[str]:
+    def save_images(self, prefix: str, directory: str, create_zip: bool = False, custom_order: List[str] = None) -> List[str]:
         """
         Save all selected images to disk.
         
@@ -208,6 +208,7 @@ class ImageManager:
             prefix: File name prefix
             directory: Directory to save images to
             create_zip: Whether to also create a ZIP archive
+            custom_order: Optional custom ordering of image IDs
         
         Returns:
             List[str]: List of saved file paths
@@ -226,6 +227,16 @@ class ImageManager:
         
         saved_files = []
         selected_ids = self.get_selected_image_ids()
+        
+        # If custom order is provided, use it (but only for items that are selected)
+        if custom_order:
+            # Filter to include only selected images in the specified order
+            ordered_selected_ids = [img_id for img_id in custom_order if img_id in selected_ids]
+            # Add any selected images that might not be in the custom order (though this shouldn't happen)
+            for img_id in selected_ids:
+                if img_id not in ordered_selected_ids:
+                    ordered_selected_ids.append(img_id)
+            selected_ids = ordered_selected_ids
         
         # Save individual images
         for idx, image_id in enumerate(selected_ids):
