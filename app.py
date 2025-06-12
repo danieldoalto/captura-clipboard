@@ -294,8 +294,16 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         
         # Configure window
         self.title("Selecionar Imagens")
-        self.geometry("800x600")
         self.minsize(600, 400)
+        self.resizable(True, True)
+        self.geometry("800x600")
+        window_width = 800
+        window_height = 600
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
         self.grab_set()  # Make modal
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         
@@ -313,20 +321,20 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.main_frame = ctk.CTkFrame(self)
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Header
-        header_frame = ctk.CTkFrame(self.main_frame)
-        header_frame.pack(fill="x", pady=(0, 10))
+        # Header with instructions
+        header_label = ctk.CTkLabel(self.main_frame, text="Selecione as imagens para salvar:", 
+                                 font=("Roboto", 14, "bold"))
+        header_label.pack(anchor="w", padx=5, pady=5)
         
-        ctk.CTkLabel(header_frame, text="Selecione as imagens para salvar:", font=("Roboto", 16)).pack(side="left", padx=5)
-        
+        # Checkbox for select all
         self.select_all_var = tk.BooleanVar(value=True)
-        self.select_all_checkbox = ctk.CTkCheckBox(header_frame, text="Selecionar Tudo", 
-                                     variable=self.select_all_var,
-                                     command=self.toggle_select_all)
-        self.select_all_checkbox.pack(side="right", padx=5)
+        select_all_cb = ctk.CTkCheckBox(self.main_frame, text="Selecionar Tudo", 
+                                      variable=self.select_all_var,
+                                      command=self.toggle_select_all)
+        select_all_cb.pack(anchor="w", padx=5, pady=5)
         
-        # Create scrollable frame for thumbnails - horizontal scrolling
-        self.scroll_frame = ctk.CTkScrollableFrame(self.main_frame, orientation="horizontal")
+        # Create scrollable frame for thumbnails - usar orientação vertical
+        self.scroll_frame = ctk.CTkScrollableFrame(self.main_frame, orientation="vertical")
         self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Get prefix from parent and setup entry field for filename prefix
@@ -387,19 +395,30 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                       font=("Roboto", 16)).pack(pady=50)
             return
         
-        # Criar uma única moldura horizontal para todas as miniaturas
-        flow_frame = ctk.CTkFrame(self.scroll_frame)
-        flow_frame.pack(fill="x", expand=True, padx=5, pady=5)
+        # Criar um container principal para organizar as miniaturas em grade
+        main_container = ctk.CTkFrame(self.scroll_frame)
+        main_container.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Configurar parâmetros das miniaturas
         thumbnail_size = self.image_manager.image_config.get("thumbnail_size", 100)
-        padding = 5
+        padding = 10
+        max_columns = 3  # Máximo de 3 miniaturas por linha
         
         # Armazenar referências para garantir que não sejam coletadas pelo garbage collector
-        self.thumbnails_container = flow_frame
+        self.thumbnails_container = main_container
+        
+        # Criar frames para cada linha de miniaturas
+        current_row = None
+        current_col = 0
         
         for idx, image_id in enumerate(image_ids):
             try:
+                # Criar nova linha se necessário
+                if current_col == 0 or current_col >= max_columns:
+                    current_row = ctk.CTkFrame(main_container)
+                    current_row.pack(fill="x", expand=False, pady=(0, padding))
+                    current_col = 0
+                
                 # Tentar carregar a imagem do arquivo
                 image_path = self.image_manager.get_image_path(image_id)
                 if not image_path or not os.path.exists(image_path):
@@ -412,46 +431,52 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                 
                 thumbnail = self.image_manager.create_thumbnail(original_image)
                 
-                # Create frame for each thumbnail with fixed width for uniformity
-                thumb_width = thumbnail_size + 40  # Ajustar conforme necessário
-                thumb_height = thumbnail_size + 90  # Espaço para checkbox e labels
-                thumb_frame = ctk.CTkFrame(flow_frame, width=thumb_width, height=thumb_height)
-                thumb_frame.pack(side="left", padx=padding, pady=padding)
+                # Calcular largura para cada miniatura (distribuir igualmente em 3 colunas)
+                thumb_width = (main_container.winfo_width() // max_columns) - (padding * 2)
+                if thumb_width < thumbnail_size + 40:  # Garantir largura mínima
+                    thumb_width = thumbnail_size + 40
+                
+                # Altura fixa para cada miniatura
+                thumb_height = thumbnail_size + 90  # Espaço para info e imagem
+                
+                # Criar frame para cada miniatura
+                thumb_frame = ctk.CTkFrame(current_row, width=thumb_width, height=thumb_height)
+                thumb_frame.pack(side="left", padx=padding, pady=padding, fill="both", expand=True)
                 thumb_frame.pack_propagate(False)  # Manter tamanho fixo
-                
-                # Create PhotoImage from thumbnail
-                thumbnail_tk = ImageTk.PhotoImage(thumbnail)
-                
-                # Create checkbox no topo
-                check_var = tk.BooleanVar(value=True)
-                check = ctk.CTkCheckBox(thumb_frame, text="", variable=check_var, 
-                                     command=lambda id=image_id, var=check_var: self.on_thumbnail_select(id, var))
-                check.pack(anchor="nw", padx=5, pady=5)
-                
-                # Create label for thumbnail
-                label = ctk.CTkLabel(thumb_frame, text="", image=thumbnail_tk)
-                label.image = thumbnail_tk  # Keep reference to prevent garbage collection
-                label.pack(padx=5, pady=5)
                 
                 # Get image metadata
                 image_info = self.image_manager.get_image_metadata(image_id)
                 size_info = f"{image_info['width']}x{image_info['height']}"
+                file_number = idx + 1
                 filename = f"{self.prefix_entry.get() or self.image_manager.default_prefix}_{idx + 1}.{self.image_manager.default_format}"
                 
-                # Add image info como labels compactos
+                # Adicionar informações ACIMA da miniatura
                 info_frame = ctk.CTkFrame(thumb_frame, fg_color="transparent")
-                info_frame.pack(fill="x", padx=5, pady=(0, 5))
+                info_frame.pack(fill="x", padx=5, pady=(5, 0))
                 
-                # Size info - fonte menor e mais compacta
-                size_label = ctk.CTkLabel(info_frame, text=f"{size_info}", 
-                                      font=("Roboto", 9))
-                size_label.pack(anchor="w")
+                # Checkbox para seleção
+                check_var = tk.BooleanVar(value=True)
+                check = ctk.CTkCheckBox(info_frame, text="", variable=check_var, 
+                                     command=lambda id=image_id, var=check_var: self.on_thumbnail_select(id, var))
+                check.pack(side="left", padx=2)
                 
-                # Filename info - apenas o número
-                file_number = idx + 1
+                # Número do arquivo
                 file_label = ctk.CTkLabel(info_frame, text=f"#{file_number}", 
-                                       font=("Roboto", 9, "bold"))
-                file_label.pack(anchor="w")
+                                       font=("Roboto", 10, "bold"))
+                file_label.pack(side="left", padx=2)
+                
+                # Tamanho da imagem
+                size_label = ctk.CTkLabel(info_frame, text=f"{size_info}", 
+                                      font=("Roboto", 10))
+                size_label.pack(side="right", padx=2)
+                
+                # Create PhotoImage from thumbnail
+                thumbnail_tk = ImageTk.PhotoImage(thumbnail)
+                
+                # Create label for thumbnail
+                label = ctk.CTkLabel(thumb_frame, text="", image=thumbnail_tk)
+                label.image = thumbnail_tk  # Keep reference to prevent garbage collection
+                label.pack(padx=5, pady=5, expand=True, fill="both")
                 
                 # Criar uma função específica para este ID de imagem para o clique duplo
                 def on_double_click_closure(img_id=image_id):
@@ -462,7 +487,7 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                 # Set up double-click event for thumbnail usando a closure
                 label.bind("<Double-Button-1>", on_double_click_closure())
                 
-                # Adicionar tooltip com info completa ao passar o mouse (usar label como workaround)
+                # Adicionar tooltip com info completa ao passar o mouse
                 tooltip_text = f"Tamanho: {size_info}\nArquivo: {filename}"
                 label.tooltip_text = tooltip_text
                 
@@ -477,6 +502,9 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                     'check': check,
                     'info_frame': info_frame
                 }
+                
+                # Avançar para a próxima coluna
+                current_col += 1
                 
             except Exception as e:
                 self.logger.error(f"Erro ao carregar miniatura para imagem {image_id}: {e}")
