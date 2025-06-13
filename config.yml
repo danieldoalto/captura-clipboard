@@ -34,24 +34,24 @@ logging:
 
 # UI Settings
 ui:
-  theme: "default"  # default, dark
+  theme: "dark"  # default, dark
   themes:
     default:
       # Cores principais do tema
       colors:
-        primary: "#3B8ED0"        # Azul principal para botões de ação e destaques
-        secondary: "#6C757D"      # Cor secundária para elementos menos importantes
-        success: "#28A745"        # Verde para confirmações e sucessos
-        danger: "#DC3545"         # Vermelho para alertas e ações perigosas
-        warning: "#FFC107"        # Amarelo para avisos
-        info: "#17A2B8"           # Azul claro para informações
-        background: "#F0F2F5"     # Fundo da aplicação
-        text: "#212529"           # Cor do texto principal
+        primary: "#2F80ED"        # Azul principal (Material Blue 600)
+        secondary: "#7F8C8D"      # Cinza equilibrado
+        success: "#27AE60"        # Verde sucesso (Material Green 600)
+        danger: "#E74C3C"         # Vermelho alerta (Material Red 600)
+        warning: "#F39C12"        # Amarelo aviso (Material Amber 600)
+        info: "#3498DB"           # Azul informação (Material Blue 400)
+        background: "#F6F8FA"     # Fundo claro suave
+        text: "#212121"           # Texto principal quase preto
         
       # Elementos específicos
       button:
         background: "{colors.primary}"
-        hover_background: "#3071A9"
+        hover_background: "#2C6FD6"
         text_color: "#FFFFFF"
         border_width: 0
         corner_radius: 8
@@ -59,16 +59,16 @@ ui:
         # Botões com variantes de cores
         success:
           background: "{colors.success}"
-          hover_background: "#218838"
+          hover_background: "#229954"
         danger:
           background: "{colors.danger}"
-          hover_background: "#C82333"
+          hover_background: "#C0392B"
         warning:
           background: "{colors.warning}"
-          hover_background: "#E0A800"
+          hover_background: "#D68910"
         info:
           background: "{colors.info}"
-          hover_background: "#138496"
+          hover_background: "#2D80B9"
         secondary:
           background: "{colors.secondary}"
           hover_background: "#5A6268"
@@ -130,18 +130,18 @@ ui:
     # Tema escuro (dark mode)
     dark:
       colors:
-        primary: "#007BFF"
-        secondary: "#6C757D"
-        success: "#28A745"
-        danger: "#DC3545"
-        warning: "#FFC107"
-        info: "#17A2B8"
+        primary: "#1E88E5"
+        secondary: "#90A4AE"
+        success: "#43A047"
+        danger: "#E53935"
+        warning: "#FDD835"
+        info: "#29B6F6"
         background: "#121212"
-        text: "#FFFFFF"
+        text: "#E0E0E0"
       
       button:
         background: "{colors.primary}"
-        hover_background: "#0069D9"
+        hover_background: "#1565C0"
         text_color: "#FFFFFF"
         border_width: 0
         corner_radius: 8
@@ -149,16 +149,16 @@ ui:
         # Botões com variantes de cores
         success:
           background: "{colors.success}"
-          hover_background: "#218838"
+          hover_background: "#2E7D32"
         danger:
           background: "{colors.danger}"
-          hover_background: "#C82333"
+          hover_background: "#C62828"
         warning:
           background: "{colors.warning}"
-          hover_background: "#E0A800"
+          hover_background: "#F9A825"
         info:
           background: "{colors.info}"
-          hover_background: "#138496"
+          hover_background: "#0288D1"
         secondary:
           background: "{colors.secondary}"
           hover_background: "#5A6268"
