@@ -100,13 +100,14 @@ The "Captura Clipboard" application is a Windows utility developed in Python. It
 
 ### 4.4. Dialog Windows (Separate `.py` files for each)
 
-* **`image_selection_dialog.py` (`ImageSelectionDialog` class):**
+* **`image_selection_dialog.py` (`ImageSelectionDialog` class):
   * Presents a dialog where users can view thumbnails of all captured images.
   * Allows users to select or deselect images for saving.
-  * Supports reordering of images (likely via drag-and-drop functionality).
+  * Supports reordering of images via drag-and-drop. (Implementation now uses absolute widget coordinates to correctly detect the drop target, fixing earlier coordinate mismatch issues.)
   * Users can initiate the image saving process from this dialog.
-* **`image_viewer_dialog.py` (`ImageViewerDialog` class):**
+* **`image_viewer_dialog.py` (`ImageViewerDialog` class):
   * A simpler dialog used to display a single selected image in a larger, more detailed view.
+  * Displays the final save filename (`NN_prefix.ext`) instead of the internal UUID, giving users immediate feedback on the exact filename that will be written to disk.
 * **`floating_capture_window.py` (`FloatingCaptureWindow` class):**
   * A small, non-modal (floating) window that likely appears briefly when a new image is captured.
   * Provides immediate visual feedback to the user about a successful capture, possibly showing a small preview or capture count.
