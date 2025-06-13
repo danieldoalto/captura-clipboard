@@ -1,0 +1,216 @@
+# Clipboard Image Capture Configuration
+
+# Modo Teste - Quando true, mantém as imagens entre execuções do programa para facilitar testes
+teste: true
+
+# Application Settings
+application:
+  title: "Captura Clipboard"
+  width: 800
+  height: 600
+
+# Image Settings
+image:
+  max_preview_width: 400
+  max_preview_height: 300
+  thumbnail_size: 100
+  default_format: "png"
+  
+# File Settings
+file:
+  default_prefix: "captura"
+  default_save_directory: ""  # Empty means user's Documents folder
+  
+# Clipboard Monitor
+monitor:
+  check_interval_ms: 500  # Time in milliseconds between clipboard checks
+
+# Logging
+logging:
+  level: "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "clipboard_capture.log"
+  max_file_size_mb: 10
+  backup_count: 3
+
+# UI Settings
+ui:
+  theme: "dark"  # default, dark
+  themes:
+    default:
+      # Cores principais do tema
+      colors:
+        primary: "#3B8ED0"        # Azul principal para botões de ação e destaques
+        secondary: "#6C757D"      # Cor secundária para elementos menos importantes
+        success: "#28A745"        # Verde para confirmações e sucessos
+        danger: "#DC3545"         # Vermelho para alertas e ações perigosas
+        warning: "#FFC107"        # Amarelo para avisos
+        info: "#17A2B8"           # Azul claro para informações
+        background: "#F0F2F5"     # Fundo da aplicação
+        text: "#212529"           # Cor do texto principal
+        
+      # Elementos específicos
+      button:
+        background: "{colors.primary}"
+        hover_background: "#3071A9"
+        text_color: "#FFFFFF"
+        border_width: 0
+        corner_radius: 8
+        
+        # Botões com variantes de cores
+        success:
+          background: "{colors.success}"
+          hover_background: "#218838"
+        danger:
+          background: "{colors.danger}"
+          hover_background: "#C82333"
+        warning:
+          background: "{colors.warning}"
+          hover_background: "#E0A800"
+        info:
+          background: "{colors.info}"
+          hover_background: "#138496"
+        secondary:
+          background: "{colors.secondary}"
+          hover_background: "#5A6268"
+        
+      input:
+        background: "#FFFFFF"
+        text_color: "{colors.text}"
+        border_color: "#CED4DA"
+        border_width: 1
+        corner_radius: 6
+        
+      dialog:
+        background: "#FFFFFF"
+        border_color: "#DDDDDD"
+        border_width: 1
+        corner_radius: 10
+        shadow: true
+        
+      thumbnail:
+        border_color: "#DDDDDD"
+        border_width: 1
+        corner_radius: 4
+        selected_border_color: "{colors.primary}"
+        selected_border_width: 2
+        
+      # Janela flutuante de captura
+      floating_window:
+        border_color: "{colors.success}"
+        border_width: 2
+        background: "#FFFFFF"
+        secondary_background: "#F8F9FA"
+        corner_radius: 8
+        text_color: "{colors.text}"
+        
+      # Fonte e textos
+      fonts:
+        default_family: "Roboto"  # Fonte padrão (pode ser sobrescrita pela customtkinter)
+        default_size: 12
+        header_size: 16
+        small_size: 10
+        
+      # Dimensões e espaçamentos
+      spacing:
+        padding_small: 5
+        padding_medium: 10
+        padding_large: 20
+        margin_small: 5
+        margin_medium: 10
+        margin_large: 20
+
+      highlight:
+        drag_source:
+          background_color: "#DDDDFF" # A color to indicate the dragged item
+          border_color: "#CCCCEE"
+        drop_target:
+          background_color: "#CCEECC" # A color for valid drop targets
+          border_color: "#AADDAA"
+        
+    # Tema escuro (dark mode)
+    dark:
+      colors:
+        primary: "#007BFF"
+        secondary: "#6C757D"
+        success: "#28A745"
+        danger: "#DC3545"
+        warning: "#FFC107"
+        info: "#17A2B8"
+        background: "#121212"
+        text: "#FFFFFF"
+      
+      button:
+        background: "{colors.primary}"
+        hover_background: "#0069D9"
+        text_color: "#FFFFFF"
+        border_width: 0
+        corner_radius: 8
+        
+        # Botões com variantes de cores
+        success:
+          background: "{colors.success}"
+          hover_background: "#218838"
+        danger:
+          background: "{colors.danger}"
+          hover_background: "#C82333"
+        warning:
+          background: "{colors.warning}"
+          hover_background: "#E0A800"
+        info:
+          background: "{colors.info}"
+          hover_background: "#138496"
+        secondary:
+          background: "{colors.secondary}"
+          hover_background: "#5A6268"
+        
+      input:
+        background: "#2D2D2D"
+        text_color: "{colors.text}"
+        border_color: "#444444"
+        border_width: 1
+        corner_radius: 6
+        
+      dialog:
+        background: "#1E1E1E"
+        border_color: "#333333"
+        border_width: 1
+        corner_radius: 10
+        shadow: true
+        
+      # Janela flutuante de captura
+      floating_window:
+        border_color: "{colors.success}"
+        border_width: 2
+        background: "#1E1E1E"
+        secondary_background: "#2D2D2D"
+        corner_radius: 8
+        text_color: "#FFFFFF"
+        
+      thumbnail:
+        border_color: "#333333"
+        border_width: 1
+        corner_radius: 4
+        selected_border_color: "{colors.primary}"
+        selected_border_width: 2
+        
+      fonts:
+        default_family: "Roboto"
+        default_size: 12
+        header_size: 16
+        small_size: 10
+        
+      spacing:
+        padding_small: 5
+        padding_medium: 10
+        padding_large: 20
+        margin_small: 5
+        margin_medium: 10
+        margin_large: 20
+
+      highlight:
+        drag_source:
+          background_color: "#555577" # A color to indicate the dragged item
+          border_color: "#777799"
+        drop_target:
+          background_color: "#446644" # A color for valid drop targets
+          border_color: "#668866"
