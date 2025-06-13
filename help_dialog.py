@@ -24,29 +24,41 @@ class HelpDialog(ctk.CTkToplevel):
         self.grab_set()
         self.focus_set()
 
-        # Determine HTML content (or fallback message)
-        html_content = self._load_markdown_as_html()
+        # Color scheme based on current appearance mode
+        mode = ctk.get_appearance_mode()
+        if mode == "Dark":
+            bg_color = "#2b2b2b"
+            fg_color = "#dddddd"
+        else:
+            bg_color = "#ffffff"
+            fg_color = "#000000"
 
-        # Choose widget: HTMLScrolledText if available, otherwise CTkTextbox fallback
+        # Determine HTML content (or fallback message) with inline style for colors
+        html_content = self._load_markdown_as_html(bg_color, fg_color)
+
+        # Layout using grid so close button stays fixed at bottom
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
         if HTMLScrolledText is not None:
             viewer = HTMLScrolledText(
                 self,
                 html=html_content,
+                background=bg_color,
                 width=680,
                 height=480,
-                background=self.cget("bg")  # match current CTk theme background
             )
-            viewer.pack(expand=True, fill="both", padx=10, pady=10)
+            viewer.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 0))
         else:
             # Fallback: plain text display
             textbox = ctk.CTkTextbox(self, wrap="word", corner_radius=0,
                                      font=CTkFont(family="Arial", size=12))
-            textbox.pack(expand=True, fill="both", padx=10, pady=10)
+            textbox.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 0))
             textbox.insert("1.0", "tkhtmlview não instalado.\n\n" + self._load_markdown_raw())
             textbox.configure(state="disabled")
 
         close_button = ctk.CTkButton(self, text="Fechar", command=self.destroy)
-        close_button.pack(pady=10)
+        close_button.grid(row=1, column=0, pady=10)
 
     # ------------------------------------------------------------------
     # Helper methods
@@ -60,9 +72,20 @@ class HelpDialog(ctk.CTkToplevel):
         except FileNotFoundError:
             return "Arquivo de ajuda (help.md) não encontrado."
 
-    def _load_markdown_as_html(self) -> str:
-        """Converts help.md to HTML using markdown library if available."""
+    def _load_markdown_as_html(self, bg: str, fg: str) -> str:
+        """Converts help.md to HTML and injects basic dark/light styles."""
         raw_md = self._load_markdown_raw()
         if markdown is None:
-            return f"<pre>{raw_md}</pre>"  # simple fallback
-        return markdown.markdown(raw_md, extensions=["fenced_code", "tables"])
+            # Simple fallback with pre tag and inline color style
+            return f'<pre style="background:{bg};color:{fg};">{raw_md}</pre>'
+
+        base_html = markdown.markdown(raw_md, extensions=["fenced_code", "tables"])
+        style_block = (
+            f"<style>\n"
+            f"body {{ background-color:{bg}; color:{fg}; font-family: Arial, sans-serif; margin:10px; }}\n"
+            f"h1, h2, h3, h4, h5 {{ color:{fg}; }}\n"
+            f"a {{ color:#4aa3ff; }}\n"
+            f"code, pre {{ background-color: {'#444' if ctk.get_appearance_mode() == 'Dark' else '#f4f4f4'}; padding:2px 4px; }}\n"
+            f"</style>"
+        )
+        return f"<html><head>{style_block}</head><body>{base_html}</body></html>"
