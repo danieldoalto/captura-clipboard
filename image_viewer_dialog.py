@@ -111,18 +111,29 @@ class ImageViewerDialog(ctk.CTkToplevel):
         # Converter para PhotoImage para exibição
         self.photo_image = ImageTk.PhotoImage(display_img)
         
-        # Criar um canvas para exibir a imagem com rolagem se necessário
-        self.canvas = tk.Canvas(scroll_frame, 
-                               width=min(display_img.width, display_width),
-                               height=min(display_img.height, display_height),
-                               highlightthickness=0)
+        # Determine canvas size (no extra white areas)
+        canvas_w = min(display_img.width, display_width)
+        canvas_h = min(display_img.height, display_height)
+
+        # Create canvas with same bg as frame to avoid white stripe
+        try:
+            bg_color = self.theme_manager.get_color("background") if self.theme_manager else self.cget("bg")
+        except AttributeError:
+            # Fallback: use appearance mode default colors
+            mode = ctk.get_appearance_mode()
+            bg_color = "#121212" if mode == "Dark" else "#FFFFFF"
+        self.canvas = tk.Canvas(scroll_frame,
+                                width=canvas_w,
+                                height=canvas_h,
+                                highlightthickness=0,
+                                background=bg_color)
         self.canvas.pack(fill="both", expand=True)
-        
-        # Exibir a imagem no canvas
-        self.canvas.create_image(0, 0, anchor="nw", image=self.photo_image)
-        
-        # Configurar o canvas para rolagem
-        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+        # Center image inside canvas
+        self.canvas.create_image(canvas_w//2, canvas_h//2, anchor="center", image=self.photo_image)
+
+        # Update scrollregion to match image size in case it's larger
+        self.canvas.config(scrollregion=(0, 0, display_img.width, display_img.height))
         
         # Informações da imagem e botão de fechar
         bottom_frame = ctk.CTkFrame(main_frame)
