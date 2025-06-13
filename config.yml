@@ -27,7 +27,7 @@ monitor:
 
 # Logging
 logging:
-  level: "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
   file: "clipboard_capture.log"
   max_file_size_mb: 10
   backup_count: 3

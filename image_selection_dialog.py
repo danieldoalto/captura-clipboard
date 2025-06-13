@@ -307,6 +307,8 @@ class ImageSelectionDialog(ctk.CTkToplevel):
             self.logger.info(f"Drag officially started for item: {image_id}")
             if self.ui_helper:
                 self.ui_helper.highlight_widget(self.drag_source, "drag_source")
+            # Mark that drag has started; prevent quick-release cancellation
+            self._drag_after_id = None
 
     def on_drag_motion(self, event):
         if not self.drag_source:
@@ -335,7 +337,10 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         # Find target row frame based on mouse Y position
         target_row_frame = None
         for row_frame in [child for child in self.scroll_frame.winfo_children() if isinstance(child, ctk.CTkFrame)]:
-            if row_frame.winfo_y() <= mouse_y < row_frame.winfo_y() + row_frame.winfo_height():
+            # Convert to root coordinates to match event.y_root
+            row_top = row_frame.winfo_rooty()
+            row_bottom = row_top + row_frame.winfo_height()
+            if row_top <= mouse_y < row_bottom:
                 target_row_frame = row_frame
                 break
         
@@ -428,7 +433,14 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.logger.info(f"Request to preview image: {image_id}")
         image_path = self.image_manager.get_image_path(image_id)
         if image_path and os.path.exists(image_path):
-            filename_display = os.path.basename(image_path)
+            # Build filename as it will be saved (NN_prefix.ext) instead of raw UUID
+            try:
+                idx_in_order = self.current_order.index(image_id)
+            except ValueError:
+                idx_in_order = 0  # Fallback if not found for some reason
+            seq_number = str(idx_in_order + 1).zfill(2)
+            prefix = self.prefix_entry.get().strip() or self.image_manager.default_prefix
+            filename_display = f"{seq_number}_{prefix}.{self.image_manager.default_format}"
             preview_dialog = ImageViewerDialog(parent=self,
                                                image_path=image_path,
                                                image_id=image_id,
