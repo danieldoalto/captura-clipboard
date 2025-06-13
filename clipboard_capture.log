@@ -1,0 +1,218 @@
+2025-06-13 10:24:12,528 - clipboard_capture - INFO - Logger initialized successfully
+2025-06-13 10:24:12,534 - clipboard_capture - INFO - Tema carregado: dark
+2025-06-13 10:24:12,534 - clipboard_capture - INFO - Tema atual: dark
+2025-06-13 10:24:12,576 - clipboard_capture - INFO - Clipboard cleared successfully
+2025-06-13 10:24:12,577 - clipboard_capture - INFO - Clipboard cleared on startup
+2025-06-13 10:24:12,673 - clipboard_capture - INFO - Test mode enabled - loading persistent images...
+2025-06-13 10:24:12,680 - clipboard_capture - INFO - Loaded 3 persistent images from temp directory.
+2025-06-13 10:24:12,681 - clipboard_capture - INFO - Application started with theme dark
+2025-06-13 10:24:12,805 - clipboard_capture - INFO - Displayed captured image with ID: e9cbc488-ce42-417a-b086-929b84a5d228 | Size: 534x364
+2025-06-13 10:24:14,508 - clipboard_capture - INFO - Clipboard monitor started
+2025-06-13 10:24:14,508 - clipboard_capture - INFO - Clipboard monitor started
+2025-06-13 10:24:15,509 - clipboard_capture - INFO - Clipboard monitor stopped
+2025-06-13 10:24:15,510 - clipboard_capture - INFO - Clipboard monitor stopped
+2025-06-13 10:24:15,653 - clipboard_capture - INFO - Floating capture window closed
+2025-06-13 10:24:15,952 - clipboard_capture - INFO - Stopped clipboard monitoring
+2025-06-13 10:24:17,577 - clipboard_capture - DEBUG - Returning metadata for 21716292-993c-4d7a-9004-60dd28a269e2: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=451x476 at 0x203323986E0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 45, 831413), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\21716292-993c-4d7a-9004-60dd28a269e2.png', 'width': 451, 'height': 476}
+2025-06-13 10:24:17,592 - clipboard_capture - DEBUG - Returning metadata for 493cefe8-100c-4faf-984d-d528d0f21551: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=253x553 at 0x2032EB5DBD0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 49, 180325), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\493cefe8-100c-4faf-984d-d528d0f21551.png', 'width': 253, 'height': 553}
+2025-06-13 10:24:17,603 - clipboard_capture - DEBUG - Returning metadata for e9cbc488-ce42-417a-b086-929b84a5d228: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=534x364 at 0x2032EB5DF90>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 38, 670886), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\e9cbc488-ce42-417a-b086-929b84a5d228.png', 'width': 534, 'height': 364}
+2025-06-13 10:24:18,917 - clipboard_capture - INFO - Drag officially started for item: 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:24:18,919 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe.!ctkframe.!ctkframe destacado com estilo 'drag_source'. Aplicado: {'fg_color': '#555577', 'border_color': '#777799'}
+2025-06-13 10:24:18,924 - clipboard_capture - DEBUG - Drag motion at (906, 427)
+2025-06-13 10:24:18,933 - clipboard_capture - DEBUG - Drag motion at (907, 427)
+2025-06-13 10:24:18,940 - clipboard_capture - DEBUG - Drag motion at (908, 427)
+2025-06-13 10:24:19,092 - clipboard_capture - DEBUG - Drag motion at (911, 427)
+2025-06-13 10:24:19,108 - clipboard_capture - DEBUG - Drag motion at (920, 427)
+2025-06-13 10:24:19,111 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe.!ctkframe2.!ctkframe destacado com estilo 'drop_target'. Aplicado: {'fg_color': '#446644', 'border_color': '#668866'}
+2025-06-13 10:24:19,117 - clipboard_capture - DEBUG - Drag motion at (927, 427)
+2025-06-13 10:24:19,124 - clipboard_capture - DEBUG - Drag motion at (934, 427)
+2025-06-13 10:24:19,132 - clipboard_capture - DEBUG - Drag motion at (939, 427)
+2025-06-13 10:24:19,149 - clipboard_capture - DEBUG - Drag motion at (948, 427)
+2025-06-13 10:24:19,156 - clipboard_capture - DEBUG - Drag motion at (950, 427)
+2025-06-13 10:24:19,165 - clipboard_capture - DEBUG - Drag motion at (951, 427)
+2025-06-13 10:24:19,172 - clipboard_capture - DEBUG - Drag motion at (952, 427)
+2025-06-13 10:24:19,350 - clipboard_capture - DEBUG - Drag release at (952, 427)
+2025-06-13 10:24:19,353 - clipboard_capture - DEBUG - Destaque removido do widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe.!ctkframe.!ctkframe. Restaurado: {'fg_color': '#1E1E1E', 'border_color': '#333333'}
+2025-06-13 10:24:19,353 - clipboard_capture - DEBUG - Reordering from 21716292-993c-4d7a-9004-60dd28a269e2 to 493cefe8-100c-4faf-984d-d528d0f21551
+2025-06-13 10:24:19,353 - clipboard_capture - DEBUG - Reordered: ['493cefe8-100c-4faf-984d-d528d0f21551', '21716292-993c-4d7a-9004-60dd28a269e2', 'e9cbc488-ce42-417a-b086-929b84a5d228']
+2025-06-13 10:24:19,353 - clipboard_capture - DEBUG - Drag release: Reordered successfully: True
+2025-06-13 10:24:19,354 - clipboard_capture - DEBUG - Resetting drag state.
+2025-06-13 10:24:19,394 - clipboard_capture - DEBUG - Returning metadata for 493cefe8-100c-4faf-984d-d528d0f21551: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=253x553 at 0x2032EB5DBD0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 49, 180325), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\493cefe8-100c-4faf-984d-d528d0f21551.png', 'width': 253, 'height': 553}
+2025-06-13 10:24:19,406 - clipboard_capture - DEBUG - Returning metadata for 21716292-993c-4d7a-9004-60dd28a269e2: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=451x476 at 0x203323986E0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 45, 831413), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\21716292-993c-4d7a-9004-60dd28a269e2.png', 'width': 451, 'height': 476}
+2025-06-13 10:24:19,418 - clipboard_capture - DEBUG - Returning metadata for e9cbc488-ce42-417a-b086-929b84a5d228: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=534x364 at 0x2032EB5DF90>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 38, 670886), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\e9cbc488-ce42-417a-b086-929b84a5d228.png', 'width': 534, 'height': 364}
+2025-06-13 10:24:20,686 - clipboard_capture - INFO - Drag officially started for item: e9cbc488-ce42-417a-b086-929b84a5d228
+2025-06-13 10:24:20,692 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe2.!ctkframe3.!ctkframe destacado com estilo 'drag_source'. Aplicado: {'fg_color': '#555577', 'border_color': '#777799'}
+2025-06-13 10:24:20,694 - clipboard_capture - DEBUG - Drag motion at (994, 421)
+2025-06-13 10:24:20,696 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe2.!ctkframe2.!ctkframe destacado com estilo 'drop_target'. Aplicado: {'fg_color': '#446644', 'border_color': '#668866'}
+2025-06-13 10:24:20,700 - clipboard_capture - DEBUG - Drag motion at (985, 420)
+2025-06-13 10:24:20,708 - clipboard_capture - DEBUG - Drag motion at (977, 419)
+2025-06-13 10:24:20,717 - clipboard_capture - DEBUG - Drag motion at (972, 419)
+2025-06-13 10:24:20,724 - clipboard_capture - DEBUG - Drag motion at (967, 418)
+2025-06-13 10:24:20,733 - clipboard_capture - DEBUG - Drag motion at (965, 418)
+2025-06-13 10:24:20,740 - clipboard_capture - DEBUG - Drag motion at (963, 417)
+2025-06-13 10:24:20,749 - clipboard_capture - DEBUG - Drag motion at (961, 417)
+2025-06-13 10:24:20,756 - clipboard_capture - DEBUG - Drag motion at (960, 417)
+2025-06-13 10:24:20,804 - clipboard_capture - DEBUG - Drag motion at (958, 416)
+2025-06-13 10:24:20,942 - clipboard_capture - DEBUG - Drag release at (958, 416)
+2025-06-13 10:24:20,944 - clipboard_capture - DEBUG - Destaque removido do widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe2.!ctkframe3.!ctkframe. Restaurado: {'fg_color': '#1E1E1E', 'border_color': '#333333'}
+2025-06-13 10:24:20,944 - clipboard_capture - DEBUG - Reordering from e9cbc488-ce42-417a-b086-929b84a5d228 to 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:24:20,945 - clipboard_capture - DEBUG - Reordered: ['493cefe8-100c-4faf-984d-d528d0f21551', 'e9cbc488-ce42-417a-b086-929b84a5d228', '21716292-993c-4d7a-9004-60dd28a269e2']
+2025-06-13 10:24:20,945 - clipboard_capture - DEBUG - Drag release: Reordered successfully: True
+2025-06-13 10:24:20,945 - clipboard_capture - DEBUG - Resetting drag state.
+2025-06-13 10:24:20,986 - clipboard_capture - DEBUG - Returning metadata for 493cefe8-100c-4faf-984d-d528d0f21551: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=253x553 at 0x2032EB5DBD0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 49, 180325), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\493cefe8-100c-4faf-984d-d528d0f21551.png', 'width': 253, 'height': 553}
+2025-06-13 10:24:21,000 - clipboard_capture - DEBUG - Returning metadata for e9cbc488-ce42-417a-b086-929b84a5d228: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=534x364 at 0x2032EB5DF90>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 38, 670886), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\e9cbc488-ce42-417a-b086-929b84a5d228.png', 'width': 534, 'height': 364}
+2025-06-13 10:24:21,014 - clipboard_capture - DEBUG - Returning metadata for 21716292-993c-4d7a-9004-60dd28a269e2: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=451x476 at 0x203323986E0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 45, 831413), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\21716292-993c-4d7a-9004-60dd28a269e2.png', 'width': 451, 'height': 476}
+2025-06-13 10:24:26,469 - clipboard_capture - INFO - Applying changes to image order.
+2025-06-13 10:24:26,506 - clipboard_capture - DEBUG - Returning metadata for 493cefe8-100c-4faf-984d-d528d0f21551: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=253x553 at 0x2032EB5DBD0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 49, 180325), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\493cefe8-100c-4faf-984d-d528d0f21551.png', 'width': 253, 'height': 553}
+2025-06-13 10:24:26,521 - clipboard_capture - DEBUG - Returning metadata for e9cbc488-ce42-417a-b086-929b84a5d228: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=534x364 at 0x2032EB5DF90>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 38, 670886), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\e9cbc488-ce42-417a-b086-929b84a5d228.png', 'width': 534, 'height': 364}
+2025-06-13 10:24:26,538 - clipboard_capture - DEBUG - Returning metadata for 21716292-993c-4d7a-9004-60dd28a269e2: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=451x476 at 0x203323986E0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 45, 831413), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\21716292-993c-4d7a-9004-60dd28a269e2.png', 'width': 451, 'height': 476}
+2025-06-13 10:24:29,575 - clipboard_capture - DEBUG - Drag cancelled due to quick release.
+2025-06-13 10:24:29,661 - clipboard_capture - INFO - Request to preview image: e9cbc488-ce42-417a-b086-929b84a5d228
+2025-06-13 10:24:43,080 - clipboard_capture - INFO - Drag officially started for item: 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:24:43,082 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe4.!ctkframe3.!ctkframe destacado com estilo 'drag_source'. Aplicado: {'fg_color': '#555577', 'border_color': '#777799'}
+2025-06-13 10:24:43,085 - clipboard_capture - DEBUG - Drag motion at (796, 339)
+2025-06-13 10:24:43,087 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe4.!ctkframe2.!ctkframe destacado com estilo 'drop_target'. Aplicado: {'fg_color': '#446644', 'border_color': '#668866'}
+2025-06-13 10:24:43,093 - clipboard_capture - DEBUG - Drag motion at (789, 338)
+2025-06-13 10:24:43,101 - clipboard_capture - DEBUG - Drag motion at (783, 337)
+2025-06-13 10:24:43,109 - clipboard_capture - DEBUG - Drag motion at (776, 336)
+2025-06-13 10:24:43,117 - clipboard_capture - DEBUG - Drag motion at (769, 335)
+2025-06-13 10:24:43,125 - clipboard_capture - DEBUG - Drag motion at (764, 334)
+2025-06-13 10:24:43,133 - clipboard_capture - DEBUG - Drag motion at (760, 334)
+2025-06-13 10:24:43,141 - clipboard_capture - DEBUG - Drag motion at (757, 333)
+2025-06-13 10:24:43,149 - clipboard_capture - DEBUG - Drag motion at (755, 333)
+2025-06-13 10:24:43,165 - clipboard_capture - DEBUG - Drag motion at (754, 333)
+2025-06-13 10:24:43,349 - clipboard_capture - DEBUG - Drag release at (754, 333)
+2025-06-13 10:24:43,351 - clipboard_capture - DEBUG - Destaque removido do widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe4.!ctkframe3.!ctkframe. Restaurado: {'fg_color': '#1E1E1E', 'border_color': '#333333'}
+2025-06-13 10:24:43,351 - clipboard_capture - DEBUG - Reordering from 21716292-993c-4d7a-9004-60dd28a269e2 to e9cbc488-ce42-417a-b086-929b84a5d228
+2025-06-13 10:24:43,352 - clipboard_capture - DEBUG - Reordered: ['493cefe8-100c-4faf-984d-d528d0f21551', '21716292-993c-4d7a-9004-60dd28a269e2', 'e9cbc488-ce42-417a-b086-929b84a5d228']
+2025-06-13 10:24:43,352 - clipboard_capture - DEBUG - Drag release: Reordered successfully: True
+2025-06-13 10:24:43,352 - clipboard_capture - DEBUG - Resetting drag state.
+2025-06-13 10:24:43,393 - clipboard_capture - DEBUG - Returning metadata for 493cefe8-100c-4faf-984d-d528d0f21551: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=253x553 at 0x2032EB5DBD0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 49, 180325), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\493cefe8-100c-4faf-984d-d528d0f21551.png', 'width': 253, 'height': 553}
+2025-06-13 10:24:43,405 - clipboard_capture - DEBUG - Returning metadata for 21716292-993c-4d7a-9004-60dd28a269e2: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=451x476 at 0x203323986E0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 45, 831413), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\21716292-993c-4d7a-9004-60dd28a269e2.png', 'width': 451, 'height': 476}
+2025-06-13 10:24:43,418 - clipboard_capture - DEBUG - Returning metadata for e9cbc488-ce42-417a-b086-929b84a5d228: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=534x364 at 0x2032EB5DF90>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 38, 670886), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\e9cbc488-ce42-417a-b086-929b84a5d228.png', 'width': 534, 'height': 364}
+2025-06-13 10:24:44,549 - clipboard_capture - INFO - Drag officially started for item: 493cefe8-100c-4faf-984d-d528d0f21551
+2025-06-13 10:24:44,551 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe5.!ctkframe.!ctkframe destacado com estilo 'drag_source'. Aplicado: {'fg_color': '#555577', 'border_color': '#777799'}
+2025-06-13 10:24:44,557 - clipboard_capture - DEBUG - Drag motion at (703, 345)
+2025-06-13 10:24:44,565 - clipboard_capture - DEBUG - Drag motion at (709, 344)
+2025-06-13 10:24:44,573 - clipboard_capture - DEBUG - Drag motion at (711, 343)
+2025-06-13 10:24:44,581 - clipboard_capture - DEBUG - Drag motion at (715, 343)
+2025-06-13 10:24:44,589 - clipboard_capture - DEBUG - Drag motion at (717, 343)
+2025-06-13 10:24:44,597 - clipboard_capture - DEBUG - Drag motion at (719, 343)
+2025-06-13 10:24:44,600 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe5.!ctkframe2.!ctkframe destacado com estilo 'drop_target'. Aplicado: {'fg_color': '#446644', 'border_color': '#668866'}
+2025-06-13 10:24:44,605 - clipboard_capture - DEBUG - Drag motion at (722, 342)
+2025-06-13 10:24:44,613 - clipboard_capture - DEBUG - Drag motion at (725, 342)
+2025-06-13 10:24:44,621 - clipboard_capture - DEBUG - Drag motion at (728, 341)
+2025-06-13 10:24:44,629 - clipboard_capture - DEBUG - Drag motion at (731, 340)
+2025-06-13 10:24:44,637 - clipboard_capture - DEBUG - Drag motion at (734, 340)
+2025-06-13 10:24:44,644 - clipboard_capture - DEBUG - Drag motion at (736, 340)
+2025-06-13 10:24:44,653 - clipboard_capture - DEBUG - Drag motion at (739, 340)
+2025-06-13 10:24:44,661 - clipboard_capture - DEBUG - Drag motion at (740, 340)
+2025-06-13 10:24:44,669 - clipboard_capture - DEBUG - Drag motion at (741, 339)
+2025-06-13 10:24:44,685 - clipboard_capture - DEBUG - Drag motion at (742, 339)
+2025-06-13 10:24:44,741 - clipboard_capture - DEBUG - Drag motion at (743, 338)
+2025-06-13 10:24:44,749 - clipboard_capture - DEBUG - Drag motion at (744, 338)
+2025-06-13 10:24:44,765 - clipboard_capture - DEBUG - Drag motion at (745, 338)
+2025-06-13 10:24:44,773 - clipboard_capture - DEBUG - Drag motion at (746, 338)
+2025-06-13 10:24:44,780 - clipboard_capture - DEBUG - Drag motion at (747, 337)
+2025-06-13 10:24:44,877 - clipboard_capture - DEBUG - Drag release at (747, 337)
+2025-06-13 10:24:44,880 - clipboard_capture - DEBUG - Destaque removido do widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe5.!ctkframe.!ctkframe. Restaurado: {'fg_color': '#1E1E1E', 'border_color': '#333333'}
+2025-06-13 10:24:44,880 - clipboard_capture - DEBUG - Reordering from 493cefe8-100c-4faf-984d-d528d0f21551 to 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:24:44,880 - clipboard_capture - DEBUG - Reordered: ['21716292-993c-4d7a-9004-60dd28a269e2', '493cefe8-100c-4faf-984d-d528d0f21551', 'e9cbc488-ce42-417a-b086-929b84a5d228']
+2025-06-13 10:24:44,880 - clipboard_capture - DEBUG - Drag release: Reordered successfully: True
+2025-06-13 10:24:44,880 - clipboard_capture - DEBUG - Resetting drag state.
+2025-06-13 10:24:44,925 - clipboard_capture - DEBUG - Returning metadata for 21716292-993c-4d7a-9004-60dd28a269e2: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=451x476 at 0x203323986E0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 45, 831413), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\21716292-993c-4d7a-9004-60dd28a269e2.png', 'width': 451, 'height': 476}
+2025-06-13 10:24:44,938 - clipboard_capture - DEBUG - Returning metadata for 493cefe8-100c-4faf-984d-d528d0f21551: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=253x553 at 0x2032EB5DBD0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 49, 180325), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\493cefe8-100c-4faf-984d-d528d0f21551.png', 'width': 253, 'height': 553}
+2025-06-13 10:24:44,950 - clipboard_capture - DEBUG - Returning metadata for e9cbc488-ce42-417a-b086-929b84a5d228: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=534x364 at 0x2032EB5DF90>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 38, 670886), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\e9cbc488-ce42-417a-b086-929b84a5d228.png', 'width': 534, 'height': 364}
+2025-06-13 10:24:46,205 - clipboard_capture - INFO - Drag officially started for item: 493cefe8-100c-4faf-984d-d528d0f21551
+2025-06-13 10:24:46,212 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe6.!ctkframe2.!ctkframe destacado com estilo 'drag_source'. Aplicado: {'fg_color': '#555577', 'border_color': '#777799'}
+2025-06-13 10:24:46,217 - clipboard_capture - DEBUG - Drag motion at (1014, 347)
+2025-06-13 10:24:46,219 - clipboard_capture - DEBUG - Widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe6.!ctkframe3.!ctkframe destacado com estilo 'drop_target'. Aplicado: {'fg_color': '#446644', 'border_color': '#668866'}
+2025-06-13 10:24:46,221 - clipboard_capture - DEBUG - Drag motion at (1016, 347)
+2025-06-13 10:24:46,237 - clipboard_capture - DEBUG - Drag motion at (1018, 347)
+2025-06-13 10:24:46,446 - clipboard_capture - DEBUG - Drag release at (1018, 347)
+2025-06-13 10:24:46,450 - clipboard_capture - DEBUG - Destaque removido do widget .!imageselectiondialog.!ctkframe.!ctkframe.!canvas.!ctkscrollableframe.!ctkframe6.!ctkframe2.!ctkframe. Restaurado: {'fg_color': '#1E1E1E', 'border_color': '#333333'}
+2025-06-13 10:24:46,450 - clipboard_capture - DEBUG - Reordering from 493cefe8-100c-4faf-984d-d528d0f21551 to e9cbc488-ce42-417a-b086-929b84a5d228
+2025-06-13 10:24:46,450 - clipboard_capture - DEBUG - Reordered: ['21716292-993c-4d7a-9004-60dd28a269e2', 'e9cbc488-ce42-417a-b086-929b84a5d228', '493cefe8-100c-4faf-984d-d528d0f21551']
+2025-06-13 10:24:46,450 - clipboard_capture - DEBUG - Drag release: Reordered successfully: True
+2025-06-13 10:24:46,450 - clipboard_capture - DEBUG - Resetting drag state.
+2025-06-13 10:24:46,495 - clipboard_capture - DEBUG - Returning metadata for 21716292-993c-4d7a-9004-60dd28a269e2: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=451x476 at 0x203323986E0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 45, 831413), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\21716292-993c-4d7a-9004-60dd28a269e2.png', 'width': 451, 'height': 476}
+2025-06-13 10:24:46,508 - clipboard_capture - DEBUG - Returning metadata for e9cbc488-ce42-417a-b086-929b84a5d228: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=534x364 at 0x2032EB5DF90>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 38, 670886), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\e9cbc488-ce42-417a-b086-929b84a5d228.png', 'width': 534, 'height': 364}
+2025-06-13 10:24:46,520 - clipboard_capture - DEBUG - Returning metadata for 493cefe8-100c-4faf-984d-d528d0f21551: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=253x553 at 0x2032EB5DBD0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 49, 180325), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\493cefe8-100c-4faf-984d-d528d0f21551.png', 'width': 253, 'height': 553}
+2025-06-13 10:24:52,178 - clipboard_capture - INFO - Applying changes to image order.
+2025-06-13 10:24:52,221 - clipboard_capture - DEBUG - Returning metadata for 21716292-993c-4d7a-9004-60dd28a269e2: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=451x476 at 0x203323986E0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 45, 831413), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\21716292-993c-4d7a-9004-60dd28a269e2.png', 'width': 451, 'height': 476}
+2025-06-13 10:24:52,234 - clipboard_capture - DEBUG - Returning metadata for e9cbc488-ce42-417a-b086-929b84a5d228: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=534x364 at 0x2032EB5DF90>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 38, 670886), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\e9cbc488-ce42-417a-b086-929b84a5d228.png', 'width': 534, 'height': 364}
+2025-06-13 10:24:52,246 - clipboard_capture - DEBUG - Returning metadata for 493cefe8-100c-4faf-984d-d528d0f21551: {'image': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=253x553 at 0x2032EB5DBD0>, 'timestamp': datetime.datetime(2025, 6, 13, 10, 5, 49, 180325), 'selected': True, 'path': 'D:\\juscredi temp\\captura clipboard\\temp_images\\493cefe8-100c-4faf-984d-d528d0f21551.png', 'width': 253, 'height': 553}
+2025-06-13 10:24:56,834 - clipboard_capture - INFO - Test mode enabled - preserving images on application close
+2025-06-13 10:24:56,834 - clipboard_capture - INFO - Application closed
+2025-06-13 10:26:39,708 - clipboard_capture - INFO - Logger initialized successfully
+2025-06-13 10:26:39,713 - clipboard_capture - INFO - Tema carregado: dark
+2025-06-13 10:26:39,713 - clipboard_capture - INFO - Tema atual: dark
+2025-06-13 10:26:39,757 - clipboard_capture - INFO - Clipboard cleared successfully
+2025-06-13 10:26:39,757 - clipboard_capture - INFO - Clipboard cleared on startup
+2025-06-13 10:26:39,843 - clipboard_capture - INFO - Test mode enabled - loading persistent images...
+2025-06-13 10:26:39,850 - clipboard_capture - INFO - Loaded 3 persistent images from temp directory.
+2025-06-13 10:26:39,851 - clipboard_capture - INFO - Application started with theme dark
+2025-06-13 10:26:39,967 - clipboard_capture - INFO - Displayed captured image with ID: e9cbc488-ce42-417a-b086-929b84a5d228 | Size: 534x364
+2025-06-13 10:26:41,616 - clipboard_capture - INFO - Clipboard monitor started
+2025-06-13 10:26:41,616 - clipboard_capture - INFO - Clipboard monitor started
+2025-06-13 10:26:43,618 - clipboard_capture - INFO - Clipboard monitor stopped
+2025-06-13 10:26:43,619 - clipboard_capture - INFO - Clipboard monitor stopped
+2025-06-13 10:26:43,678 - clipboard_capture - INFO - Floating capture window closed
+2025-06-13 10:26:44,026 - clipboard_capture - INFO - Stopped clipboard monitoring
+2025-06-13 10:26:47,517 - clipboard_capture - INFO - Drag officially started for item: 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:26:51,266 - clipboard_capture - INFO - Drag officially started for item: e9cbc488-ce42-417a-b086-929b84a5d228
+2025-06-13 10:26:53,830 - clipboard_capture - INFO - Applying changes to image order.
+2025-06-13 10:27:06,510 - clipboard_capture - INFO - Test mode enabled - preserving images on application close
+2025-06-13 10:27:06,510 - clipboard_capture - INFO - Application closed
+2025-06-13 10:27:29,944 - clipboard_capture - INFO - Logger initialized successfully
+2025-06-13 10:27:29,949 - clipboard_capture - INFO - Tema carregado: dark
+2025-06-13 10:27:29,949 - clipboard_capture - INFO - Tema atual: dark
+2025-06-13 10:27:29,988 - clipboard_capture - INFO - Clipboard cleared successfully
+2025-06-13 10:27:29,988 - clipboard_capture - INFO - Clipboard cleared on startup
+2025-06-13 10:27:30,073 - clipboard_capture - INFO - Test mode enabled - loading persistent images...
+2025-06-13 10:27:30,080 - clipboard_capture - INFO - Loaded 3 persistent images from temp directory.
+2025-06-13 10:27:30,080 - clipboard_capture - INFO - Application started with theme dark
+2025-06-13 10:27:30,198 - clipboard_capture - INFO - Displayed captured image with ID: e9cbc488-ce42-417a-b086-929b84a5d228 | Size: 534x364
+2025-06-13 10:27:31,827 - clipboard_capture - INFO - Clipboard monitor started
+2025-06-13 10:27:31,827 - clipboard_capture - INFO - Clipboard monitor started
+2025-06-13 10:27:32,828 - clipboard_capture - INFO - Clipboard monitor stopped
+2025-06-13 10:27:32,829 - clipboard_capture - INFO - Clipboard monitor stopped
+2025-06-13 10:27:32,938 - clipboard_capture - INFO - Floating capture window closed
+2025-06-13 10:27:33,329 - clipboard_capture - INFO - Stopped clipboard monitoring
+2025-06-13 10:27:39,213 - clipboard_capture - INFO - Request to preview image: 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:28:31,469 - clipboard_capture - INFO - Request to preview image: 493cefe8-100c-4faf-984d-d528d0f21551
+2025-06-13 10:30:23,094 - clipboard_capture - INFO - Test mode enabled - preserving images on application close
+2025-06-13 10:30:23,094 - clipboard_capture - INFO - Application closed
+2025-06-13 10:35:31,113 - clipboard_capture - INFO - Logger initialized successfully
+2025-06-13 10:35:31,120 - clipboard_capture - INFO - Tema carregado: dark
+2025-06-13 10:35:31,120 - clipboard_capture - INFO - Tema atual: dark
+2025-06-13 10:35:31,166 - clipboard_capture - INFO - Clipboard cleared successfully
+2025-06-13 10:35:31,166 - clipboard_capture - INFO - Clipboard cleared on startup
+2025-06-13 10:35:31,237 - clipboard_capture - INFO - Test mode enabled - loading persistent images...
+2025-06-13 10:35:31,245 - clipboard_capture - INFO - Loaded 3 persistent images from temp directory.
+2025-06-13 10:35:31,245 - clipboard_capture - INFO - Application started with theme dark
+2025-06-13 10:35:31,358 - clipboard_capture - INFO - Displayed captured image with ID: e9cbc488-ce42-417a-b086-929b84a5d228 | Size: 534x364
+2025-06-13 10:35:33,553 - clipboard_capture - INFO - Clipboard monitor started
+2025-06-13 10:35:33,553 - clipboard_capture - INFO - Clipboard monitor started
+2025-06-13 10:35:34,554 - clipboard_capture - INFO - Clipboard monitor stopped
+2025-06-13 10:35:34,555 - clipboard_capture - INFO - Clipboard monitor stopped
+2025-06-13 10:35:34,698 - clipboard_capture - INFO - Floating capture window closed
+2025-06-13 10:35:35,087 - clipboard_capture - INFO - Stopped clipboard monitoring
+2025-06-13 10:35:38,719 - clipboard_capture - INFO - Request to preview image: 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:35:42,791 - clipboard_capture - INFO - Drag officially started for item: 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:35:44,391 - clipboard_capture - INFO - Applying changes to image order.
+2025-06-13 10:35:46,341 - clipboard_capture - INFO - Drag officially started for item: 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:35:46,502 - clipboard_capture - INFO - Request to preview image: 21716292-993c-4d7a-9004-60dd28a269e2
+2025-06-13 10:35:49,435 - clipboard_capture - INFO - Request to preview image: 493cefe8-100c-4faf-984d-d528d0f21551
+2025-06-13 10:35:52,103 - clipboard_capture - INFO - Request to preview image: e9cbc488-ce42-417a-b086-929b84a5d228
+2025-06-13 10:35:59,691 - clipboard_capture - INFO - Last save directory saved: D:/juscredi temp
+2025-06-13 10:35:59,695 - clipboard_capture - INFO - Saved image to ZIP archive: 01_captura.png
+2025-06-13 10:35:59,702 - clipboard_capture - INFO - Saved image to ZIP archive: 02_captura.png
+2025-06-13 10:35:59,707 - clipboard_capture - INFO - Saved image to ZIP archive: 03_captura.png
+2025-06-13 10:35:59,707 - clipboard_capture - INFO - Created ZIP archive at D:/juscredi temp\captura_images.zip
+2025-06-13 10:36:07,190 - clipboard_capture - INFO - Last save directory saved: D:/juscredi temp
+2025-06-13 10:36:07,194 - clipboard_capture - INFO - Saved image to D:/juscredi temp\01_captura.png
+2025-06-13 10:36:07,199 - clipboard_capture - INFO - Saved image to D:/juscredi temp\02_captura.png
+2025-06-13 10:36:07,204 - clipboard_capture - INFO - Saved image to D:/juscredi temp\03_captura.png
+2025-06-13 10:36:09,427 - clipboard_capture - INFO - Deleted 3 images.
+2025-06-13 10:36:11,487 - clipboard_capture - INFO - Application closed

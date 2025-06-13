@@ -1,9 +1,11 @@
 import customtkinter as ctk
 import tkinter as tk
+import time
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 from image_viewer_dialog import ImageViewerDialog # Import ImageViewerDialog
-from typing import Dict, List, Callable # Assuming List and Callable might be used in full class
+from typing import Dict, List, Callable, Optional # Assuming List and Callable might be used in full class
+from ui_helper import UIHelper
 import os
 import shutil
 
@@ -20,18 +22,26 @@ class ImageSelectionDialog(ctk.CTkToplevel):
     Modal dialog for selecting images to save.
     """
     
-    def __init__(self, parent, image_manager, *args, **kwargs): # image_manager: ImageManager
+    def __init__(self, parent, image_manager: 'ImageManager', ui_helper: Optional[UIHelper] = None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         
         self.parent = parent
         self.image_manager = image_manager
         self.logger = parent.logger
+        
+        # Usar o UIHelper do parent ou criar um novo se não for fornecido
+        self.ui_helper = ui_helper or (parent.ui_helper if hasattr(parent, 'ui_helper') else None)
+        self.theme_manager = self.ui_helper.theme_manager if self.ui_helper else None
         self.images_saved = False  # Track if images were saved
-        self.has_unsaved_changes = False  # Track if order has changed but not applied
-        self.original_order = []  # Original order of images
+        self.has_unsaved_changes = False
+        self.original_order = list(self.image_manager.get_all_image_ids()) # Initial order
         self.current_order = []  # Current order after drag and drop
         self.drag_source = None  # Current thumbnail being dragged
         self.drop_target = None  # Where the thumbnail will be dropped
+        self.active_drop_target_widget = None # Widget atualmente destacado como alvo
+        self.drag_start_time = 0
+        self.drag_item_id = None
+        self._drag_after_id = None
         
         # Configure window
         self.title("Selecionar Imagens")
@@ -54,57 +64,103 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         
         # Initialize UI
         self.setup_ui()
+        self.update_idletasks() # Garante que os widgets tenham suas dimensões calculadas
         self.load_thumbnails()
     
     def setup_ui(self):
         """Set up the dialog UI"""
+        # Obter configurações de padding do tema
+        padding_small = self.ui_helper.get_padding("small") if self.ui_helper else 5
+        padding_med = self.ui_helper.get_padding("medium") if self.ui_helper else 10
+        padding_large = self.ui_helper.get_padding("large") if self.ui_helper else 20
+        
         # Main frame
         self.main_frame = ctk.CTkFrame(self)
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.main_frame.pack(fill="both", expand=True, padx=padding_med, pady=padding_med)
+        
+        # Aplicar estilo ao frame principal
+        if self.ui_helper:
+            self.ui_helper.style_frame(self.main_frame)
         
         # Header with instructions
-        header_label = ctk.CTkLabel(self.main_frame, text="Selecione as imagens para salvar:", 
-                                 font=("Roboto", 14, "bold"))
-        header_label.pack(anchor="w", padx=5, pady=5)
+        header_label = ctk.CTkLabel(self.main_frame, text="Selecione as imagens para salvar:")
+        header_label.pack(anchor="w", padx=padding_small, pady=padding_small)
+        
+        # Aplicar estilo ao título
+        if self.ui_helper:
+            self.ui_helper.style_label(header_label, "header")
         
         # Checkbox for select all
         self.select_all_var = tk.BooleanVar(value=True)
         select_all_cb = ctk.CTkCheckBox(self.main_frame, text="Selecionar Tudo", 
                                       variable=self.select_all_var,
                                       command=self.toggle_select_all)
-        select_all_cb.pack(anchor="w", padx=5, pady=5)
+        select_all_cb.pack(anchor="w", padx=padding_small, pady=padding_small)
+        
+        # Aplicar estilo ao checkbox
+        if self.ui_helper:
+            self.ui_helper.style_checkbox(select_all_cb)
         
         # Create scrollable frame for thumbnails - usar orientação vertical
         self.scroll_frame = ctk.CTkScrollableFrame(self.main_frame, orientation="vertical")
-        self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        self.scroll_frame.pack(fill="both", expand=True, padx=padding_small, pady=padding_small)
+        
+        # Aplicar estilo ao frame de rolagem
+        if self.ui_helper:
+            # Usar estilo de frame secundário para o frame de rolagem
+            self.ui_helper.style_scrollable_frame(self.scroll_frame)
         
         # Prefix entry frame
         prefix_frame = ctk.CTkFrame(self.main_frame)
-        prefix_frame.pack(fill="x", pady=(10, 0))
+        prefix_frame.pack(fill="x", pady=(padding_med, 0))
         
-        ctk.CTkLabel(prefix_frame, text="Prefixo:").pack(side="left", padx=5)
+        # Aplicar estilo ao frame de prefixo
+        if self.ui_helper:
+            self.ui_helper.style_frame(prefix_frame)
+        
+        prefix_label = ctk.CTkLabel(prefix_frame, text="Prefixo:")
+        prefix_label.pack(side="left", padx=padding_small)
+        
+        # Aplicar estilo ao label
+        if self.ui_helper:
+            self.ui_helper.style_label(prefix_label)
         
         self.prefix_entry = ctk.CTkEntry(prefix_frame, width=200)
-        self.prefix_entry.pack(side="left", padx=5)
+        self.prefix_entry.pack(side="left", padx=padding_small)
         self.prefix_entry.insert(0, self.parent.prefix_entry.get())
+        
+        # Aplicar estilo ao campo de entrada
+        if self.ui_helper:
+            self.ui_helper.style_entry(self.prefix_entry)
+        
+        # Create zip checkbox
+        self.create_zip_var = tk.BooleanVar(value=True)
+        self.create_zip_checkbox = ctk.CTkCheckBox(prefix_frame, 
+                                           text="Criar arquivo ZIP", 
+                                           variable=self.create_zip_var)
+        self.create_zip_checkbox.pack(side="left", padx=(padding_large, padding_small))
+        
+        # Aplicar estilo ao checkbox
+        if self.ui_helper:
+            self.ui_helper.style_checkbox(self.create_zip_checkbox)
         
         # Bottom button frame
         button_frame = ctk.CTkFrame(self.main_frame)
         button_frame.pack(fill="x", pady=(10, 0))
         
-        # Add ZIP checkbox
-        self.create_zip_var = tk.BooleanVar(value=False)
-        self.create_zip_checkbox = ctk.CTkCheckBox(button_frame, text="Criar arquivo ZIP", 
-                                variable=self.create_zip_var)
-        self.create_zip_checkbox.pack(side="left", padx=5)
-        
         # Add buttons
         self.cancel_button = ctk.CTkButton(button_frame, text="Voltar", command=self.on_close)
         self.cancel_button.pack(side="right", padx=5)
+        if self.ui_helper:
+            self.ui_helper.style_button(self.cancel_button)
+            self.cancel_button.configure(fg_color=self.theme_manager.get("button.secondary.background") if self.theme_manager else "#6c757d")
         
         self.save_button = ctk.CTkButton(button_frame, text="Salvar Selecionadas", command=self.on_save)
         self.save_button.pack(side="right", padx=5)
-        
+        if self.ui_helper:
+            self.ui_helper.style_button(self.save_button)
+            self.save_button.configure(fg_color=self.theme_manager.get("button.success.background") if self.theme_manager else "#28a745")
+
         # Add apply changes button
         self.apply_button = ctk.CTkButton(
             button_frame, 
@@ -115,9 +171,33 @@ class ImageSelectionDialog(ctk.CTkToplevel):
             hover_color="#138496"
         )
         self.apply_button.pack(side="right", padx=5)
+        if self.ui_helper:
+            self.ui_helper.style_button(self.apply_button) # Apply base style
         
         # Dictionary to store thumbnail data
         self.thumbnails: Dict[str, Dict] = {}
+    
+    def _get_cell_from_widget(self, widget):
+        """Helper function to determine the parent cell of a widget"""
+        if not widget:
+            return None
+        
+        # Check if widget is directly in our thumbnails
+        for image_id, thumbnail in self.thumbnails.items():
+            if widget == thumbnail['frame']:
+                return thumbnail['frame']
+        
+        # Check for thumbnail label
+        for image_id, thumbnail in self.thumbnails.items():
+            if widget == thumbnail['label']:
+                return thumbnail['frame']
+        
+        # If not found directly, try to find the parent that might be a thumbnail frame
+        parent = widget.master
+        if parent and parent != self and parent != self.scroll_frame:
+            return self._get_cell_from_widget(parent)
+            
+        return None
     
     def toggle_select_all(self):
         """Toggle selection state of all images"""
@@ -139,58 +219,56 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         self.thumbnails.clear()
         self.row_frames.clear()
         
-        self.original_order = self.image_manager.get_all_image_ids()
-        self.current_order = list(self.original_order) # Make a copy
-        
         image_ids = self.image_manager.get_all_image_ids()
         if not image_ids:
             ctk.CTkLabel(self.scroll_frame, text="Nenhuma imagem capturada.").pack(pady=20)
             return
 
-        # Determine number of columns based on window width (responsive)
-        # Max thumbnail width + padding
-        thumbnail_size_val = self.image_manager.image_config.get('thumbnail_size', 128) # Default to 128 if not found
-        thumb_max_width = thumbnail_size_val + 20 
-        num_cols = max(1, self.scroll_frame.winfo_width() // thumb_max_width)
+        # Initialize ordering if needed (respects prior drag-and-drop if not applied)
+        if not self.current_order or set(self.current_order) != set(image_ids):
+            # If images were added/removed externally or first load, reset current_order from original_order (or manager's state)
+            self.current_order = list(self.original_order)
+            if set(self.current_order) != set(image_ids): # Further sync if manager changed significantly
+                self.current_order = image_ids.copy()
+                self.original_order = image_ids.copy() # Reset original if completely out of sync
+
+        # Determine number of columns based on window width
+        thumbnail_size_val = self.image_manager.image_config.get('thumbnail_size', 128)
+        num_cols = 3 # Fixo em 3 colunas
         
         current_row_frame = None
         
         for idx, image_id in enumerate(self.current_order):
             img_data = self.image_manager.get_image_metadata(image_id)
-            if not img_data or 'path' not in img_data or not img_data['path']:
-                self.logger.warning(f"Invalid or missing metadata/path for image_id: {image_id}. Data: {img_data}")
-                continue
-            
-            # Additional check to ensure the path actually exists before trying to open
-            if not os.path.exists(img_data['path']):
-                self.logger.warning(f"Image path does not exist for image_id: {image_id}. Path: {img_data['path']}")
+            if not img_data or 'path' not in img_data or not os.path.exists(img_data['path']):
+                self.logger.warning(f"Skipping thumbnail for missing image_id: {image_id}")
                 continue
             
             if idx % num_cols == 0:
                 current_row_frame = ctk.CTkFrame(self.scroll_frame)
-                current_row_frame.pack(fill="x", expand=True)
+                current_row_frame.pack(fill="x", expand=True, pady=(5 if idx > 0 else 0))
                 self.row_frames.append(current_row_frame)
             
-            thumb_frame = ctk.CTkFrame(current_row_frame, border_width=1, border_color="gray")
-            thumb_frame.pack(side="left", padx=5, pady=5, anchor="n")
-            
-            # Store image_id with the frame for drag and drop
-            thumb_frame.image_id = image_id 
+            cell_frame = ctk.CTkFrame(current_row_frame, fg_color="transparent")
+            cell_frame.pack(side="left", fill="x", expand=True, padx=2, pady=2)
 
-            # Thumbnail image
+            thumb_frame = ctk.CTkFrame(cell_frame, border_width=1)
+            thumb_frame.pack(anchor="n", padx=3, pady=3)
+            thumb_frame.image_id = image_id
+
             img = Image.open(img_data['path'])
             img.thumbnail((thumbnail_size_val, thumbnail_size_val))
             photo = ImageTk.PhotoImage(img)
             
             img_label = ctk.CTkLabel(thumb_frame, image=photo, text="")
-            img_label.image = photo # Keep a reference
-            img_label.pack()
+            img_label.image = photo
+            img_label.pack(side="top", fill="both", expand=True)
             
-            # Checkbox for selection
             var = tk.BooleanVar(value=img_data.get('selected', True))
-            cb = ctk.CTkCheckBox(thumb_frame, text=f"{idx+1}.jpg", variable=var, 
+            filename_display_text = f"{idx+1}.{self.image_manager.default_format}"
+            cb = ctk.CTkCheckBox(thumb_frame, text=filename_display_text, variable=var,
                                  command=lambda i_id=image_id, v=var: self.image_manager.set_image_selected(i_id, v.get()))
-            cb.pack(pady=(0,5))
+            cb.pack(side="bottom", pady=(2,5))
             
             self.thumbnails[image_id] = {
                 'frame': thumb_frame, 
@@ -200,105 +278,174 @@ class ImageSelectionDialog(ctk.CTkToplevel):
                 'original_path': img_data['path']
             }
             
-            # Bind drag and drop events to the thumbnail frame
-            thumb_frame.bind("<ButtonPress-1>", lambda event, i_id=image_id: self.on_drag_start(event, i_id))
-            thumb_frame.bind("<B1-Motion>", self.on_drag_motion)
-            thumb_frame.bind("<ButtonRelease-1>", self.on_drag_release)
-            thumb_frame.bind("<Double-Button-1>", lambda event, i_id=image_id: self.show_image_preview(i_id))
-            img_label.bind("<Double-Button-1>", lambda event, i_id=image_id: self.show_image_preview(i_id)) # Bind to label too for better UX
+            if self.ui_helper:
+                self.ui_helper.style_checkbox(cb)
+                self.ui_helper.style_frame(thumb_frame, style="thumbnail")
+            
+            # Bind events to both the frame and the label to ensure dragging works everywhere
+            for widget in [thumb_frame, img_label]:
+                widget.bind("<ButtonPress-1>", lambda e, img_id=image_id: self.on_drag_start(e, img_id))
+                widget.bind("<B1-Motion>", self.on_drag_motion)
+                widget.bind("<ButtonRelease-1>", self.on_drag_release)
+                widget.bind("<Double-Button-1>", lambda e, i_id=image_id: self.show_image_preview(i_id))
 
         # Update scrollregion after adding all thumbnails
         self.scroll_frame.update_idletasks()
         self.update_apply_button_state()
 
     def on_drag_start(self, event, image_id: str):
-        self.logger.debug(f"Drag start on image_id: {image_id} at ({event.x_root}, {event.y_root})")
-        self.logger.debug(f"Drag start: {image_id}")
-        widget = self.thumbnails[image_id]['frame']
-        self.drag_source = widget
-        self.drag_source.lift()
-        # Record initial mouse position relative to widget
-        self.drag_source.start_x = event.x_root - widget.winfo_x()
-        self.drag_source.start_y = event.y_root - widget.winfo_y()
-        # Highlight source
-        self.drag_source.configure(border_color="blue", border_width=2)
+        # Schedule a function to start the drag after a delay.
+        # This allows double-clicks to be processed without interference.
+        self.drag_item_id = image_id
+        self._drag_after_id = self.after(200, lambda: self._start_drag(image_id))
+
+    def _start_drag(self, image_id: str):
+        """Helper to begin the drag operation after a delay."""
+        # Ensure the drag operation is still valid
+        if self.drag_item_id == image_id:
+            self.drag_source = self.thumbnails[image_id]['frame']
+            self.logger.info(f"Drag officially started for item: {image_id}")
+            if self.ui_helper:
+                self.ui_helper.highlight_widget(self.drag_source, "drag_source")
+            # Mark that drag has started; prevent quick-release cancellation
+            self._drag_after_id = None
 
     def on_drag_motion(self, event):
-        # self.logger.debug(f"Drag motion to ({event.x_root}, {event.y_root})") # Can be very verbose
         if not self.drag_source:
             return
-
-        x = event.x_root - self.drag_source.start_x
-        y = event.y_root - self.drag_source.start_y
-        self.drag_source.place(x=x, y=y, anchor="nw")
-
-        # Determine drop target
-        self.logger.debug(f"Original current_order before potential drop: {self.current_order}")
-        self.drop_target = None
-        for image_id, data in self.thumbnails.items():
-            target_widget = data['frame']
-            if target_widget == self.drag_source: 
-                continue
-            
-            x1, y1 = target_widget.winfo_rootx(), target_widget.winfo_rooty()
-            x2, y2 = x1 + target_widget.winfo_width(), y1 + target_widget.winfo_height()
-            
-            if x1 < event.x_root < x2 and y1 < event.y_root < y2:
-                self.drop_target = target_widget
-                self.logger.debug(f"Drop target identified: {self.drop_target}")
+        
+        self.logger.debug(f"Drag motion at ({event.x_root}, {event.y_root})")
+        
+        # Scroll the scroll_frame if near the edges
+        scroll_y = self.scroll_frame.winfo_rooty()
+        scroll_height = self.scroll_frame.winfo_height()
+        mouse_y = event.y_root
+        threshold = 50  # pixels from edge to trigger scroll
+        scroll_speed_factor = 0.05  # Adjust scroll speed
+        
+        if mouse_y < scroll_y + threshold:
+            # Scroll up
+            current_yview = self.scroll_frame._parent_canvas.yview()
+            target_y = max(0, current_yview[0] - scroll_speed_factor)
+            self.scroll_frame._parent_canvas.yview_moveto(target_y)
+        elif mouse_y > scroll_y + scroll_height - threshold:
+            # Scroll down
+            current_yview = self.scroll_frame._parent_canvas.yview()
+            target_y = min(1.0, current_yview[1] + scroll_speed_factor)
+            self.scroll_frame._parent_canvas.yview_moveto(target_y)
+        
+        # Find target row frame based on mouse Y position
+        target_row_frame = None
+        for row_frame in [child for child in self.scroll_frame.winfo_children() if isinstance(child, ctk.CTkFrame)]:
+            # Convert to root coordinates to match event.y_root
+            row_top = row_frame.winfo_rooty()
+            row_bottom = row_top + row_frame.winfo_height()
+            if row_top <= mouse_y < row_bottom:
+                target_row_frame = row_frame
                 break
-            # Highlight potential drop target
-            target_widget.configure(border_color="green", border_width=2)
+        
+        if target_row_frame:
+            # Encontrar a célula de destino dentro da linha
+            target_cell = self._get_cell_from_widget(target_row_frame.winfo_containing(event.x_root, event.y_root))
+            if target_cell and self.active_drop_target_widget is not target_cell:
+                # Remove highlight from previous drop target
+                if self.active_drop_target_widget and self.ui_helper:
+                    self.ui_helper.remove_highlight(self.active_drop_target_widget)
+                
+                # Set and style the new active_drop_target_widget
+                self.active_drop_target_widget = target_cell
+                if self.ui_helper:
+                    self.ui_helper.highlight_widget(self.active_drop_target_widget, "drop_target")
+                self.drop_target = target_cell  # Store the widget itself
         else:
-            # Reset highlight if not target
-            target_widget.configure(border_color="gray", border_width=1)
+            # Mouse is not over any valid target
+            if self.active_drop_target_widget and self.ui_helper:
+                self.ui_helper.remove_highlight(self.active_drop_target_widget)
+            self.active_drop_target_widget = None
+            self.drop_target = None
 
     def on_drag_release(self, event):
-        self.logger.debug(f"Drag release at ({event.x_root}, {event.y_root})")
-        if not self.drag_source:
-            self.logger.debug("Drag release with no drag_source.")
+        # If the mouse is released before the drag delay has passed, cancel the drag.
+        if self._drag_after_id:
+            self.after_cancel(self._drag_after_id)
+            self._drag_after_id = None
+            self.logger.debug("Drag cancelled due to quick release.")
             return
-
-        self.logger.debug(f"Drag release. Source widget image_id: {self.drag_source.image_id}, Drop target widget image_id: {self.drop_target.image_id if self.drop_target else 'None'}")
-        self.drag_source.configure(border_color="gray", border_width=1) # Reset source highlight
-
-        self.logger.debug(f"Attempting reorder. Drag source ID: {self.drag_source.image_id}, Drop target ID: {self.drop_target.image_id if self.drop_target else 'None'}")
-        if self.drop_target and self.drop_target.image_id != self.drag_source.image_id:
-            source_id = self.drag_source.image_id
-            target_id = self.drop_target.image_id
+        
+        self.logger.debug(f"Drag release at ({event.x_root}, {event.y_root})")
+        
+        source_widget_id_log = "None"
+        reordered_successfully = False
+        if self.drag_source:
+            source_widget_id = self.drag_source.image_id
             
-            try:
-                s_idx = self.current_order.index(source_id)
-                t_idx = self.current_order.index(target_id)
-                
-                self.current_order.pop(s_idx)
-                self.current_order.insert(t_idx, source_id)
-                
-                self.has_unsaved_changes = True
-                self.logger.debug(f"Reordered. New current_order: {self.current_order}")
-                self.load_thumbnails() # Reload to reflect new order
-            except ValueError:
-                self.logger.error(f"Error reordering: ID not found in current_order. Source: {source_id}, Target: {target_id}, Order: {self.current_order}")
-                self.load_thumbnails() # Reload to reset
+            # Reset source highlight
+            if self.drag_source.winfo_exists():
+                if self.ui_helper:
+                    self.ui_helper.remove_highlight(self.drag_source)
+                source_widget_id_log = source_widget_id
+            
+            # If we have a valid drop target, reorder the images
+            if self.drop_target and hasattr(self.drop_target, 'image_id'):
+                target_id = self.drop_target.image_id
+                if source_widget_id != target_id:
+                    self.logger.debug(f"Reordering from {source_widget_id} to {target_id}")
+                    
+                    # Get current positions
+                    source_idx = self.current_order.index(source_widget_id)
+                    target_idx = self.current_order.index(target_id)
+                    
+                    # Perform reordering in current_order list
+                    self.current_order.remove(source_widget_id)
+                    
+                    # If target is now at the end (because source was before it), adjust
+                    if target_idx >= len(self.current_order):
+                        self.current_order.append(source_widget_id)
+                    else:
+                        self.current_order.insert(target_idx, source_widget_id)
+                    
+                    # Mark that we have unsaved changes
+                    self.has_unsaved_changes = True
+                    reordered_successfully = True
+                    self.logger.debug(f"Reordered: {self.current_order}")
+                else:
+                    self.logger.debug("Source and target are the same, not reordering.")
+            else:
+                self.logger.debug("No valid drop target found.")
         else:
-            self.logger.debug("No valid drop or dropped on itself. Reverting.")
-            self.load_thumbnails() # No valid drop or dropped on itself, revert
+            self.logger.debug("Drag release with no drag_source.")
 
+        self.logger.debug(f"Drag release: Reordered successfully: {reordered_successfully}")
         # Reset drag state
         self.logger.debug("Resetting drag state.")
         self.drag_source = None
-        self.drop_target = None # Ensure drop_target is reset
-        self.update_apply_button_state()
+        self.drop_target = None
+        self.active_drop_target_widget = None
+        
+        # Reload thumbnails to reflect any changes or reset positions
+        # This will also call update_apply_button_state() at its end.
+        if reordered_successfully:
+            self.load_thumbnails()
+        else:
+            self.update_apply_button_state()
 
     def show_image_preview(self, image_id: str):
         self.logger.info(f"Request to preview image: {image_id}")
         image_path = self.image_manager.get_image_path(image_id)
         if image_path and os.path.exists(image_path):
-            filename_display = os.path.basename(image_path)
+            # Build filename as it will be saved (NN_prefix.ext) instead of raw UUID
+            try:
+                idx_in_order = self.current_order.index(image_id)
+            except ValueError:
+                idx_in_order = 0  # Fallback if not found for some reason
+            seq_number = str(idx_in_order + 1).zfill(2)
+            prefix = self.prefix_entry.get().strip() or self.image_manager.default_prefix
+            filename_display = f"{seq_number}_{prefix}.{self.image_manager.default_format}"
             preview_dialog = ImageViewerDialog(parent=self,
                                                image_path=image_path,
                                                image_id=image_id,
-                                               filename=filename_display)
+                                               filename=filename_display,
+                                               ui_helper=self.ui_helper)
             # Modality is handled by ImageViewerDialog itself
         else:
             self.logger.warning(f"Could not show preview for {image_id}. Path: {image_path}")
@@ -319,28 +466,49 @@ class ImageSelectionDialog(ctk.CTkToplevel):
         messagebox.showinfo("Ordem Aplicada", "A nova ordem das imagens foi aplicada.", parent=self)
 
     def on_save(self):
-        selected_images = self.image_manager.get_selected_images()
-        if not selected_images:
+        selected_ids = self.image_manager.get_selected_image_ids()
+        if not selected_ids:
             messagebox.showwarning("Nenhuma Imagem", "Nenhuma imagem selecionada para salvar.", parent=self)
             return
 
-        save_path = filedialog.askdirectory(parent=self)
+        save_path = filedialog.askdirectory(parent=self, initialdir=self.image_manager.default_save_directory)
         if not save_path:
             return
 
-        prefix = self.prefix_entry.get()
+        prefix = self.prefix_entry.get().strip() or self.image_manager.default_prefix
         create_zip = self.create_zip_var.get()
         
         try:
-            saved_files = self.image_manager.save_selected_images(save_path, prefix, create_zip)
+            # Use current_order for saving to maintain the displayed numbering
+            saved_files = self.image_manager.save_images(prefix, save_path, create_zip, custom_order=self.current_order)
+            
             if saved_files:
-                messagebox.showinfo("Imagens Salvas", f"{len(saved_files)} imagem(ns) salva(s) em {save_path}", parent=self)
+                if create_zip:
+                    zip_path = saved_files[0]
+                    msg = f"Arquivo ZIP salvo com sucesso em:\n{zip_path}"
+                else:
+                    count = len(saved_files)
+                    msg = f"{count} imagens salvas com sucesso em:\n{save_path}"
+                messagebox.showinfo("Imagens Salvas", msg, parent=self)
                 self.images_saved = True
-                # Clear selected images from manager after saving
-                self.image_manager.delete_images([img_id for img_id, data in selected_images.items()])
-                self.on_close() # Close dialog after saving
+                
+                # Ask user if they want to clear the saved images from the application
+                if messagebox.askyesno("Limpar Imagens Salvas", 
+                                       "Deseja remover as imagens salvas da lista de captura atual?", 
+                                       parent=self):
+                    # Only delete images that were part of the "selected_ids" list for this save operation
+                    self.image_manager.delete_images_by_ids(selected_ids)
+                    self.has_unsaved_changes = False # Reset as images are gone
+                    self.original_order = list(self.image_manager.get_all_image_ids()) # Update original order
+                    self.load_thumbnails() # Refresh the view
+                    
+                    # If all images are cleared, update main app state
+                    if not self.image_manager.get_all_image_ids():
+                        self.parent.save_button.configure(state="disabled")
+                        self.parent.has_unsaved_images = False
+                        self.on_close() # Close if no images left
             else:
-                messagebox.showerror("Erro ao Salvar", "Nenhuma imagem foi salva. Verifique os logs.", parent=self)
+                messagebox.showerror("Erro ao Salvar", "Nenhuma imagem foi salva. Verifique as permissões ou logs.", parent=self)
         except Exception as e:
             self.logger.error(f"Error saving images: {e}")
             messagebox.showerror("Erro ao Salvar", f"Ocorreu um erro: {e}", parent=self)

@@ -185,6 +185,30 @@ class ImageManager:
         if image_id in self.images and 'image' in self.images[image_id]:
             return self.create_thumbnail(self.images[image_id]['image'])
         return None
+
+    def delete_images_by_ids(self, image_ids: List[str]) -> int:
+        """
+        Delete specified images from the manager and their temp files.
+        
+        Args:
+            image_ids: List of image IDs to delete.
+        Returns:
+            int: Number of images successfully deleted.
+        """
+        deleted_count = 0
+        for image_id in image_ids:
+            if image_id in self.images:
+                data = self.images.pop(image_id)
+                if 'path' in data and os.path.exists(data['path']):
+                    try:
+                        os.remove(data['path'])
+                    except Exception as e:
+                        if self.logger:
+                            self.logger.error(f"Error removing temporary file for {image_id}: {e}")
+                deleted_count += 1
+        if self.logger and deleted_count > 0:
+            self.logger.info(f"Deleted {deleted_count} images.")
+        return deleted_count
         
     def clear_images(self):
         """Clear all stored images"""
@@ -389,6 +413,50 @@ class ImageManager:
             if self.logger:
                 self.logger.error(f"Error loading last save directory: {e}")
     
+    def load_persistent_images(self) -> int:
+        """
+        Load existing images from the temporary directory into the manager.
+        This is used when starting in test mode to preserve state.
+        """
+        try:
+            temp_files = glob.glob(os.path.join(self.temp_dir, f"*.{self.default_format}"))
+            loaded_count = 0
+
+            for file_path in temp_files:
+                try:
+                    image_id = os.path.basename(file_path).replace(f".{self.default_format}", "")
+                    
+                    # Check if it's a valid UUID to avoid other files
+                    try:
+                        uuid.UUID(image_id)
+                    except ValueError:
+                        continue
+
+                    image = Image.open(file_path)
+                    
+                    self.images[image_id] = {
+                        'image': image,
+                        'timestamp': datetime.fromtimestamp(os.path.getmtime(file_path)),
+                        'selected': True,
+                        'path': file_path,
+                        'width': image.width,
+                        'height': image.height
+                    }
+                    loaded_count += 1
+
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error(f"Error loading persistent image {file_path}: {e}")
+            
+            if self.logger and loaded_count > 0:
+                self.logger.info(f"Loaded {loaded_count} persistent images from temp directory.")
+                
+            return loaded_count
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error scanning for persistent images: {e}")
+            return 0
+
     def clean_temp_files(self):
         """
         Remove todos os arquivos temporários da pasta temp_images

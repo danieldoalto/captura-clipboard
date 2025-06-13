@@ -1,19 +1,26 @@
 import customtkinter as ctk
 import tkinter as tk
 from PIL import Image, ImageTk
+from typing import Optional
+from ui_helper import UIHelper
+import os # Necessário para os.path e os.path.getsize
 
 class ImageViewerDialog(ctk.CTkToplevel):
     """
     Dialog for viewing images in larger size
     """
     
-    def __init__(self, parent, image_path: str, image_id: str, filename: str=None, *args, **kwargs):
+    def __init__(self, parent, image_path: str, image_id: str, filename: str=None, ui_helper: Optional[UIHelper] = None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         
         # Store reference to parent and ID
         self.parent = parent
         self.image_id = image_id
         self.filename = filename
+        
+        # Usar o UIHelper do parent ou criar um novo se não for fornecido
+        self.ui_helper = ui_helper or (parent.ui_helper if hasattr(parent, 'ui_helper') else None)
+        self.theme_manager = self.ui_helper.theme_manager if self.ui_helper else None
         
         # Set title and make resizable
         self.title("Visualizar Imagem")
@@ -64,14 +71,26 @@ class ImageViewerDialog(ctk.CTkToplevel):
     
     def setup_ui(self, display_width, display_height):
         """Setup image viewer UI"""
+        # Obter configurações de padding do tema
+        padding_small = self.ui_helper.get_padding("small") if self.ui_helper else 5
+        padding_med = self.ui_helper.get_padding("medium") if self.ui_helper else 10
+        padding_large = self.ui_helper.get_padding("large") if self.ui_helper else 20
+        
         # Container frame
         main_frame = ctk.CTkFrame(self)
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        main_frame.pack(fill="both", expand=True, padx=padding_med, pady=padding_med)
         
+        # Aplicar estilo ao frame principal se possível
+        if self.ui_helper:
+            self.ui_helper.style_frame(main_frame)
+            
         # Create a scrollable frame for the image
         # Usar orientação "both" para permitir rolagem horizontal e vertical se necessário
-        scroll_frame = ctk.CTkScrollableFrame(main_frame, orientation="vertical")
-        scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        scroll_frame = ctk.CTkFrame(main_frame)
+        scroll_frame.pack(fill="both", expand=True, padx=padding_small, pady=padding_small)
+        
+        if self.ui_helper:
+            self.ui_helper.style_frame(scroll_frame)
         
         # Verificar se a imagem é maior que o espaço disponível
         if self.image.width > display_width or self.image.height > display_height:
@@ -108,22 +127,55 @@ class ImageViewerDialog(ctk.CTkToplevel):
         # Informações da imagem e botão de fechar
         bottom_frame = ctk.CTkFrame(main_frame)
         bottom_frame.pack(fill="x", pady=(10, 0))
+        if self.ui_helper:
+            self.ui_helper.style_frame(bottom_frame) # Estilizar o frame de rodapé
         
-        # Frame para in
-        # (O restante do código da classe continua aqui, 
-        # mas foi truncado na visualização anterior.
-        # É importante copiar a classe INTEIRA)
-        # ... (restante do método setup_ui e da classe ImageViewerDialog)
-        # Adicionando o restante do código que faltava na visualização:
-        info_text = f"ID: {self.image_id} | Nome: {self.filename if self.filename else 'N/A'}"
-        if self.scaled_display:
-            info_text += f" | Exibindo em {self.scale_percent}% do tamanho original"
+        # Frame para informações em múltiplas linhas à esquerda
+        info_frame = ctk.CTkFrame(bottom_frame, fg_color="transparent")
+        info_frame.pack(side="left", fill="y", padx=padding_small, pady=padding_small)
         
-        info_label = ctk.CTkLabel(bottom_frame, text=info_text)
-        info_label.pack(side="left", padx=10)
+        # Exibir dimensões da imagem
+        size_text = f"Tamanho: {self.image.width}x{self.image.height} pixels"
+        size_label = ctk.CTkLabel(info_frame, text=size_text)
+        size_label.pack(anchor="w")
+        if self.ui_helper:
+            self.ui_helper.style_label(size_label, "small")
+
+        # Exibir formato e tamanho em KB
+        # Acessar image_manager através do parent (ImageSelectionDialog)
+        image_manager = self.parent.image_manager 
+        file_path = os.path.join(image_manager.temp_dir,
+                               f"{self.image_id}.{image_manager.default_format}")
+        if os.path.exists(file_path):
+            file_size = os.path.getsize(file_path) / 1024
+            format_text = f"Formato: {image_manager.default_format.upper()}, Tamanho: {file_size:.1f} KB"
+            format_label = ctk.CTkLabel(info_frame, text=format_text)
+            format_label.pack(anchor="w")
+            if self.ui_helper:
+                self.ui_helper.style_label(format_label, "small")
+        
+        # Exibir informação de escala se a imagem foi redimensionada
+        if hasattr(self, 'scaled_display') and self.scaled_display:
+            scale_text = f"Exibindo em {self.scale_percent}% do tamanho original"
+            scale_label = ctk.CTkLabel(info_frame, text=scale_text) # font=("Roboto", 12, "italic") - CTkLabel não suporta 'italic' diretamente na font tuple
+            scale_label.pack(anchor="w")
+            if self.ui_helper:
+                self.ui_helper.style_label(scale_label, "small") # Pode-se criar uma variante de estilo para itálico se necessário
+        
+        # Exibir nome do arquivo (se fornecido)
+        if self.filename:
+            filename_text = f"Nome do arquivo: {self.filename}"
+            filename_label = ctk.CTkLabel(info_frame, text=filename_text)
+            filename_label.pack(anchor="w")
+            if self.ui_helper:
+                self.ui_helper.style_label(filename_label, "small")
         
         close_button = ctk.CTkButton(bottom_frame, text="Fechar", command=self.destroy, width=80)
         close_button.pack(side="right", padx=10, pady=5)
+        
+        # Aplicar estilo ao botão se possível
+        if self.ui_helper:
+            self.ui_helper.style_button(close_button, "secondary")
 
         # Bind Escape key to close window
         self.bind("<Escape>", lambda e: self.destroy())
