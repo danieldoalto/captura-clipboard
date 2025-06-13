@@ -80,12 +80,7 @@ class HelpDialog(ctk.CTkToplevel):
             return f'<pre style="background:{bg};color:{fg};">{raw_md}</pre>'
 
         base_html = markdown.markdown(raw_md, extensions=["fenced_code", "tables"])
-        style_block = (
-            f"<style>\n"
-            f"body {{ background-color:{bg}; color:{fg}; font-family: Arial, sans-serif; margin:10px; }}\n"
-            f"h1, h2, h3, h4, h5 {{ color:{fg}; }}\n"
-            f"a {{ color:#4aa3ff; }}\n"
-            f"code, pre {{ background-color: {'#444' if ctk.get_appearance_mode() == 'Dark' else '#f4f4f4'}; padding:2px 4px; }}\n"
-            f"</style>"
+        body_style = (
+            f"background-color:{bg}; color:{fg}; font-family: Arial, sans-serif; margin:10px;"
         )
-        return f"<html><head>{style_block}</head><body>{base_html}</body></html>"
+        return f"<html><body style=\"{body_style}\">{base_html}</body></html>"
