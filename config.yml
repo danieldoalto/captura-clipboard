@@ -1,7 +1,7 @@
 # Clipboard Image Capture Configuration
 
 # Modo Teste - Quando true, mantém as imagens entre execuções do programa para facilitar testes
-teste: true
+teste: false
 
 # Application Settings
 application:
