@@ -30,8 +30,6 @@ Thumbs.db
 # ZIPs and output
 *.zip
 
-# Config
-config.yml
 
 # Temp files - ignore contents but keep directory
 temp_images/*
