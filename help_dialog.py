@@ -30,8 +30,8 @@ class HelpDialog(ctk.CTkToplevel):
             bg_color = "#2b2b2b"
             fg_color = "#ffff66"  # yellow text for better contrast in dark mode
         else:
-            bg_color = "#2b2b2b"
-            fg_color = "#ffff66"
+            bg_color = "#ffffcc"
+            fg_color = "#000000"
 
         # Determine HTML content (or fallback message) with inline style for colors
         html_content = self._load_markdown_as_html(bg_color, fg_color)
@@ -90,5 +90,5 @@ class HelpDialog(ctk.CTkToplevel):
             f"background-color:{bg}; color:{fg}; font-family: Arial, sans-serif; margin:10px;"
         )
         # Wrap content in div with explicit text color to override tkhtmlview defaults
-        wrapped_html = f"<div style=\"color:{fg};\">{base_html}</div>"
+        wrapped_html = f"<div style=\"color:{fg};font-size:8pt;\">{base_html}</div>"
         return f"<html><body style=\"{body_style}\">{wrapped_html}</body></html>"

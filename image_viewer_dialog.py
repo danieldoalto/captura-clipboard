@@ -64,10 +64,10 @@ class ImageViewerDialog(ctk.CTkToplevel):
         # Setup UI
         self.setup_ui(display_width, display_height)
         
-        # Make dialog modal
-        self.transient(parent)
-        self.grab_set()
-        self.focus_set()
+        # # Make dialog modal (commented out to allow multiple windows)
+        # self.transient(parent)
+        # self.grab_set()
+        self.focus_set() # Keep focus on the new window
     
     def setup_ui(self, display_width, display_height):
         """Setup image viewer UI"""
@@ -129,11 +129,14 @@ class ImageViewerDialog(ctk.CTkToplevel):
                                 background=bg_color)
         self.canvas.pack(fill="both", expand=True)
 
-        # Center image inside canvas
-        self.canvas.create_image(canvas_w//2, canvas_h//2, anchor="center", image=self.photo_image)
+        # Center image inside canvas and store the item ID
+        self.image_on_canvas = self.canvas.create_image(canvas_w//2, canvas_h//2, anchor="center", image=self.photo_image)
 
         # Update scrollregion to match image size in case it's larger
         self.canvas.config(scrollregion=(0, 0, display_img.width, display_img.height))
+
+        # Bind resize event to recenter the image
+        self.canvas.bind("<Configure>", self._on_canvas_resize)
         
         # Informações da imagem e botão de fechar
         bottom_frame = ctk.CTkFrame(main_frame)
@@ -190,3 +193,12 @@ class ImageViewerDialog(ctk.CTkToplevel):
 
         # Bind Escape key to close window
         self.bind("<Escape>", lambda e: self.destroy())
+
+    def _on_canvas_resize(self, event):
+        """Recenter the image when the canvas is resized."""
+        # Get current canvas size
+        canvas_w = event.width
+        canvas_h = event.height
+        
+        # Move the image to the new center
+        self.canvas.coords(self.image_on_canvas, canvas_w // 2, canvas_h // 2)
