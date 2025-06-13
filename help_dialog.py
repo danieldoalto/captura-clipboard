@@ -30,8 +30,8 @@ class HelpDialog(ctk.CTkToplevel):
             bg_color = "#2b2b2b"
             fg_color = "#ffff66"  # yellow text for better contrast in dark mode
         else:
-            bg_color = "#ffffff"
-            fg_color = "#000000"
+            bg_color = "#2b2b2b"
+            fg_color = "#ffff66"
 
         # Determine HTML content (or fallback message) with inline style for colors
         html_content = self._load_markdown_as_html(bg_color, fg_color)
@@ -45,10 +45,16 @@ class HelpDialog(ctk.CTkToplevel):
                 self,
                 html=html_content,
                 background=bg_color,
+                foreground=fg_color,
                 width=680,
                 height=480,
             )
             viewer.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 0))
+            # Force text color in case HTML body style is ignored by tkhtmlview internal widget
+            try:
+                viewer.configure(foreground=fg_color)
+            except Exception:
+                pass
         else:
             # Fallback: plain text display
             textbox = ctk.CTkTextbox(self, wrap="word", corner_radius=0,
@@ -83,4 +89,6 @@ class HelpDialog(ctk.CTkToplevel):
         body_style = (
             f"background-color:{bg}; color:{fg}; font-family: Arial, sans-serif; margin:10px;"
         )
-        return f"<html><body style=\"{body_style}\">{base_html}</body></html>"
+        # Wrap content in div with explicit text color to override tkhtmlview defaults
+        wrapped_html = f"<div style=\"color:{fg};\">{base_html}</div>"
+        return f"<html><body style=\"{body_style}\">{wrapped_html}</body></html>"

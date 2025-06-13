@@ -34,7 +34,7 @@ logging:
 
 # UI Settings
 ui:
-  theme: "dark"  # default, dark
+  theme: "default"  # default, dark
   themes:
     default:
       # Cores principais do tema
