@@ -28,7 +28,7 @@ class HelpDialog(ctk.CTkToplevel):
         mode = ctk.get_appearance_mode()
         if mode == "Dark":
             bg_color = "#2b2b2b"
-            fg_color = "#dddddd"
+            fg_color = "#ffff66"  # yellow text for better contrast in dark mode
         else:
             bg_color = "#ffffff"
             fg_color = "#000000"
